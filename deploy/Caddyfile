@@ -1,0 +1,13 @@
+# HTTPS tự động (Let's Encrypt) cho tên miền trong biến DOMAIN.
+{$DOMAIN} {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy same-origin
+	}
+	request_body {
+		max_size 25MB
+	}
+	reverse_proxy frontend:3000
+}

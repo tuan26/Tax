@@ -4,6 +4,7 @@ export type Customer = {
   business_day_cutoff: string;
   pending_items?: number;
   pending_records?: number;
+  open_findings?: number;
 };
 
 export type Evidence = {
@@ -42,6 +43,9 @@ export type LedgerRecord = {
   sent_date: string | null;
   status: string;
   evidence: Evidence[] | null;
+  counted?: boolean;
+  matched_document_ids?: string[];
+  matched_payment_ids?: string[];
 };
 
 export type QueueItem = {
@@ -66,3 +70,29 @@ export type QueueGroup = {
 };
 
 export type Queue = { items: QueueItem[]; groups: QueueGroup[]; records: LedgerRecord[] };
+
+export type MatchCriterion = { criterion: "amount" | "date" | "type"; ok: boolean | null; detail: string };
+
+export type Finding = {
+  id: string;
+  rule_id: string;
+  severity: "check" | "confirm";
+  title: string;
+  detail: string;
+  amount: number | null;
+  status: "OPEN" | "REQUESTED" | "RESOLVED" | "DISMISSED";
+  resolution: "matched" | "has_document" | "no_longer_applies" | null;
+  resolution_note: string | null;
+  requested_at: string | null;
+  decided_at: string | null;
+  record: LedgerRecord | null;
+  match?: { id: string; evidence: MatchCriterion[]; document: LedgerRecord };
+};
+
+export type Candidate = {
+  record_id: string;
+  fields: RecordFields;
+  evidence: MatchCriterion[];
+  evidence_detail: Evidence[];
+  score: number;
+};

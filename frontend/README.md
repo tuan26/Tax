@@ -21,6 +21,7 @@ Pilot phải chạy sau HTTPS. Token đăng nhập nằm trong `localStorage` c�
 | Nhập dữ liệu | `/customers/:id/import` | Kéo ảnh từ Zalo PC, dán ảnh (Ctrl+V), dán đoạn chat, chọn ngày kinh doanh |
 | Sổ theo ngày | `/customers/:id/ledger` | Thu chi theo ngày, mở giao dịch để xem chứng từ gốc, sửa và xác nhận |
 | Hàng chờ duyệt | `/customers/:id/review` | Xử lý từng mục hệ thống chưa chắc |
+| Việc cần xử lý | `/customers/:id/findings` | Phát hiện từ rule DQ-01..03, ghép chứng từ, tạo tin nhắn đòi chứng từ để dán vào Zalo |
 
 Phím tắt ở Hàng chờ duyệt: `1`–`9` chọn ứng viên, `Enter` xác nhận giao dịch, `J`/`K` (hoặc mũi tên) chuyển mục.
 Ô số tiền nhận `2350000`, `2.350.000`, `2tr35`, `950k`.

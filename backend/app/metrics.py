@@ -53,6 +53,12 @@ def pilot_metrics(conn, customer_id=None) -> dict:
             WHERE d.group_id = r.group_id AND d.decision = 'anchor' ORDER BY d.created_at LIMIT 1) AS source_type
         FROM record r WHERE r.confirmed_at IS NOT NULL {where.replace('g.', 'r.')}""", args).fetchall()
 
+    finds = conn.execute(f"""
+        SELECT f.status, f.resolution, f.rule_id, f.requested_at,
+          (SELECT m.source_type FROM record r JOIN item_decision d ON d.group_id = r.group_id AND d.decision = 'anchor'
+             JOIN message m ON m.id = d.message_id WHERE r.id = f.record_id ORDER BY d.created_at LIMIT 1) AS source_type
+        FROM finding f WHERE true {where.replace('g.', 'f.')}""", args).fetchall()
+
     activity = conn.execute(f"""
         SELECT customer_id, count(DISTINCT date_trunc('minute', at)) AS minutes FROM activity_log a
         WHERE customer_id IS NOT NULL {where.replace('g.', 'a.')} GROUP BY customer_id""", args).fetchall()
@@ -88,6 +94,16 @@ def pilot_metrics(conn, customer_id=None) -> dict:
             b["records_ai_missing_field"] += missing
             b["records_ai_wrong_field"] += wrong
 
+    for f in finds:
+        for key in (f["source_type"] or "UNKNOWN", "ALL"):
+            b = out[key]
+            b["findings"] += 1
+            # Hữu ích: kế toán đã yêu cầu khách, ghép chứng từ, hoặc xác nhận đã có chứng từ.
+            useful = f["requested_at"] is not None or f["resolution"] in ("matched", "has_document")
+            b["findings_useful"] += useful
+            b["findings_dismissed"] += f["status"] == "DISMISSED"
+            b["findings_closed_by_match"] += f["resolution"] == "matched"
+
     result = {}
     for key, b in out.items():
         result[key] = {
@@ -96,6 +112,7 @@ def pilot_metrics(conn, customer_id=None) -> dict:
             "silent_restructure_rate": _ratio(b["silent_restructure"], b["engine_decisions"]),
             "review_rate": _ratio(b["sent_to_review"], b["engine_decisions"]),
             "ai_wrong_field_rate": _ratio(b["records_ai_wrong_field"], b["confirmed_records"]),
+            "finding_useful_rate": _ratio(b["findings_useful"], b["findings_useful"] + b["findings_dismissed"]),
         }
     result["active_minutes_by_customer"] = {str(a["customer_id"]): a["minutes"] for a in activity}
     return result

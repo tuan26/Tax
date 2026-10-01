@@ -11,11 +11,11 @@ from pathlib import Path
 import psycopg
 
 AUDITED = ["customer", "import_batch", "message", "attachment", "extraction", "ai_call", "grouping_run",
-           "message_group", "item_decision", "record"]
+           "message_group", "item_decision", "record", "finding", "match"]
 APPEND_ONLY = ["import_batch", "message", "attachment", "extraction", "ai_call", "grouping_run", "audit_event"]
 RLS_TABLES = ["tenant", "app_user", "user_session", "customer", "import_batch", "message", "attachment", "extraction",
               "ai_call", "grouping_run", "message_group", "item_decision", "record", "processing_job", "activity_log",
-              "audit_event"]
+              "audit_event", "finding", "match"]
 
 
 def verify(admin_url: str, storage_dir: str) -> tuple[list[str], dict]:

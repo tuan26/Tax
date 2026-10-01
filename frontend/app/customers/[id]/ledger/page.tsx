@@ -48,8 +48,10 @@ export default function LedgerPage({ params }: { params: Promise<{ id: string }>
     return [...map.entries()].sort(([a], [b]) => (a === "" ? -1 : b === "" ? 1 : b.localeCompare(a)));
   }, [rows]);
 
+  // Khoản chuyển khoản đã ghép với hóa đơn chỉ tính một lần (tính hóa đơn).
   const total = (list: LedgerRecord[], t: "INCOME" | "EXPENSE") =>
-    list.filter((r) => r.fields.transaction_type === t && r.fields.amount != null).reduce((s, r) => s + (r.fields.amount ?? 0), 0);
+    list.filter((r) => r.counted !== false && r.fields.transaction_type === t && r.fields.amount != null)
+      .reduce((s, r) => s + (r.fields.amount ?? 0), 0);
   const all = rows ?? [];
 
   return (
@@ -112,7 +114,10 @@ export default function LedgerPage({ params }: { params: Promise<{ id: string }>
                       </td>
                       <td>
                         <div>{r.fields.description ?? <span className="muted">Không có nội dung</span>}</div>
-                        <span className="muted small">{KIND[r.evidence_kind]}</span>
+                        <span className="muted small">
+                          {KIND[r.evidence_kind]}
+                          {r.counted === false && " · đã ghép với chứng từ, không cộng lại"}
+                        </span>
                       </td>
                       <td className="hide-sm" style={{ width: 260 }}>
                         <Thumbs items={r.evidence} />

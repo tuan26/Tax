@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Respons
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, Field
 
-from . import review
+from . import findings, review
 from .pipeline import process_customer
 from .security import new_token, token_hash, verify_password
 
@@ -53,6 +53,20 @@ class SplitIn(BaseModel):
 
 class MergeIn(BaseModel):
     group_ids: list[UUID]
+
+
+class FindingDecisionIn(BaseModel):
+    action: str
+    note: str | None = None
+
+
+class MatchIn(BaseModel):
+    document_record_id: UUID
+
+
+class RequestTextIn(BaseModel):
+    finding_ids: list[UUID]
+    mark_requested: bool = True
 
 
 class ExcludeIn(BaseModel):
@@ -135,7 +149,9 @@ def create_app(settings, db, storage, ocr) -> FastAPI:
                   (SELECT count(*) FROM item_decision d WHERE d.customer_id = c.id AND d.superseded_at IS NULL
                      AND (d.status = 'AMBIGUOUS' OR (d.decision = 'unmatched' AND d.needs_review))) AS pending_items,
                   (SELECT count(*) FROM record r WHERE r.customer_id = c.id AND r.status = 'ACTIVE'
-                     AND r.review_required) AS pending_records
+                     AND r.review_required) AS pending_records,
+                  (SELECT count(*) FROM finding f WHERE f.customer_id = c.id AND f.status IN ('OPEN', 'REQUESTED'))
+                     AS open_findings
                 FROM customer c ORDER BY c.name""").fetchall()
 
     @app.get("/customers/{customer_id}")
@@ -296,13 +312,21 @@ def create_app(settings, db, storage, ocr) -> FastAPI:
             rows = conn.execute("SELECT * FROM record WHERE customer_id = %s AND status = 'ACTIVE' ORDER BY created_at",
                                 (customer_id,)).fetchall()
             ev = evidence_index(conn, customer_id)
+            matches = findings.confirmed_matches(conn, customer_id)
         out = []
         for r in rows:
             eff = review.effective_fields(r)
             posting = eff.get("posting_date")
             if posting and ((date_from and posting < date_from.isoformat()) or (date_to and posting > date_to.isoformat())):
                 continue
-            out.append(record_view(r, ev))
+            view = record_view(r, ev)
+            paid_by = [m for m in matches if m["payment_record_id"] == r["id"]]
+            docs_for = [m for m in matches if m["document_record_id"] == r["id"]]
+            # Khoản chi đã ghép với chứng từ: chỉ tính chứng từ, không cộng hai lần.
+            view["counted"] = not paid_by
+            view["matched_document_ids"] = [m["document_record_id"] for m in paid_by]
+            view["matched_payment_ids"] = [m["payment_record_id"] for m in docs_for]
+            out.append(view)
         return out
 
     @app.patch("/records/{record_id}")
@@ -314,6 +338,76 @@ def create_app(settings, db, storage, ocr) -> FastAPI:
     def confirm(record_id: UUID, body: RecordFieldsIn, c: Auth):
         review_call(c, review.confirm_record, record_id, body.fields, c.user_id)
         return {"ok": True}
+
+    # ------------------------------------------------------------------ phát hiện
+
+    @app.get("/customers/{customer_id}/findings")
+    def list_findings(customer_id: UUID, c: Auth):
+        with tx(c) as conn:
+            _customer(conn, customer_id)
+            rows = conn.execute("SELECT * FROM finding WHERE customer_id = %s ORDER BY"
+                                " CASE status WHEN 'OPEN' THEN 0 WHEN 'REQUESTED' THEN 1 ELSE 2 END, created_at",
+                                (customer_id,)).fetchall()
+            ev = evidence_index(conn, customer_id)
+            recs = {r["id"]: r for r in conn.execute("SELECT * FROM record WHERE customer_id = %s",
+                                                     (customer_id,)).fetchall()}
+            out = []
+            for f in rows:
+                item = dict(f)
+                item["record"] = record_view(recs[f["record_id"]], ev) if f["record_id"] in recs else None
+                if f["match_id"]:
+                    m = conn.execute("SELECT * FROM match WHERE id = %s", (f["match_id"],)).fetchone()
+                    item["match"] = {**m, "document": record_view(recs[m["document_record_id"]], ev)}
+                out.append(item)
+            return out
+
+    @app.get("/findings/{finding_id}/candidates")
+    def candidates(finding_id: UUID, c: Auth):
+        def run(conn):
+            ev_cache = {}
+            out = findings.match_candidates(conn, finding_id)
+            for cand in out:
+                cid = conn.execute("SELECT customer_id FROM record WHERE id = %s", (cand["record_id"],)).fetchone()
+                if cid["customer_id"] not in ev_cache:
+                    ev_cache[cid["customer_id"]] = evidence_index(conn, cid["customer_id"])
+                idx = ev_cache[cid["customer_id"]]
+                cand["evidence_detail"] = [idx[e] for e in cand.pop("evidence_items") if e in idx]
+            return out
+        return review_call(c, run)
+
+    @app.post("/findings/{finding_id}/match")
+    def match(finding_id: UUID, body: MatchIn, c: Auth):
+        return {"match_id": review_call(c, findings.confirm_match, finding_id, body.document_record_id, c.user_id)}
+
+    @app.post("/matches/{match_id}/undo")
+    def undo_match(match_id: UUID, c: Auth):
+        review_call(c, findings.undo_match, match_id, c.user_id)
+        return {"ok": True}
+
+    @app.post("/findings/{finding_id}/decision")
+    def finding_decision(finding_id: UUID, body: FindingDecisionIn, c: Auth):
+        review_call(c, findings.decide, finding_id, body.action, body.note, c.user_id)
+        return {"ok": True}
+
+    @app.post("/findings/{finding_id}/reopen")
+    def finding_reopen(finding_id: UUID, c: Auth):
+        review_call(c, findings.reopen, finding_id, c.user_id)
+        return {"ok": True}
+
+    @app.post("/customers/{customer_id}/request-text")
+    def request_text(customer_id: UUID, body: RequestTextIn, c: Auth):
+        def run(conn):
+            _customer(conn, customer_id)
+            ids = [r["id"] for r in conn.execute(
+                "SELECT id FROM finding WHERE customer_id = %s AND id = ANY(%s)", (customer_id, body.finding_ids))]
+            text = findings.request_text(conn, ids)
+            if body.mark_requested:
+                for fid in ids:
+                    f = conn.execute("SELECT status FROM finding WHERE id = %s", (fid,)).fetchone()
+                    if f["status"] == "OPEN":
+                        findings.decide(conn, fid, "request", None, c.user_id)
+            return text
+        return {"text": review_call(c, run)}
 
     @app.post("/activity", status_code=204)
     def activity(body: ActivityIn, c: Auth):

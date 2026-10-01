@@ -227,8 +227,16 @@ def exclude_group(conn, group_id, reason: str, user_id):
         insert_decision(conn, tenant, customer, d["item_ref"], "unmatched", UNMATCHED, reason=f"excluded:{reason}",
                         decided_by="user", user_id=user_id)
     conn.execute("UPDATE message_group SET superseded_at = now() WHERE id = %s", (group_id,))
-    conn.execute("UPDATE record SET status = 'EXCLUDED', excluded_reason = %s, review_required = false,"
-                 " updated_at = now() WHERE group_id = %s", (reason, group_id))
+    rec = conn.execute("UPDATE record SET status = 'EXCLUDED', excluded_reason = %s, review_required = false,"
+                       " updated_at = now() WHERE group_id = %s RETURNING id", (reason, group_id)).fetchone()
+    if rec is not None:
+        # Ghép dựa trên giao dịch bị loại không còn giá trị: bỏ ghép, mở lại phát hiện của bên còn lại.
+        for m in conn.execute("SELECT id FROM match WHERE status = 'CONFIRMED' AND"
+                              " (payment_record_id = %s OR document_record_id = %s)", (rec["id"], rec["id"])).fetchall():
+            conn.execute("UPDATE match SET status='UNDONE', undone_at=now(), undone_by=%s WHERE id=%s",
+                         (user_id, m["id"]))
+            conn.execute("UPDATE finding SET status='OPEN', resolution=NULL, match_id=NULL, decided_at=NULL,"
+                         " decided_by=NULL, updated_at=now() WHERE match_id=%s", (m["id"],))
     renormalize(conn, tenant, customer)
 
 
@@ -274,6 +282,7 @@ def edit_record(conn, record_id, fields: dict, user_id):
     r = _record(conn, record_id)
     merged = {**(r["fields_confirmed"] or {}), **_validate(fields)}
     conn.execute("UPDATE record SET fields_confirmed = %s, updated_at = now() WHERE id = %s", (Jsonb(merged), record_id))
+    _rerun_rules(conn, r)
 
 
 def confirm_record(conn, record_id, fields: dict | None, user_id):
@@ -287,6 +296,14 @@ def confirm_record(conn, record_id, fields: dict | None, user_id):
         "UPDATE record SET fields_confirmed = %s, review_required = false, review_reasons = '[]',"
         " confirmed_by = %s, confirmed_at = now(), updated_at = now() WHERE id = %s",
         (Jsonb(final), user_id, record_id))
+    _rerun_rules(conn, r)
+
+
+def _rerun_rules(conn, record):
+    """Xác nhận hay sửa giao dịch là lúc nó trở thành dữ liệu chắc chắn: chạy lại rule ngay."""
+    from .findings import run_rules  # tránh vòng import
+
+    run_rules(conn, record["tenant_id"], record["customer_id"])
 
 
 

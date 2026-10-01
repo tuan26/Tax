@@ -47,6 +47,7 @@ export function Shell({ customerId, children }: { customerId?: string; children:
               {tab(`/customers/${customerId}/import`, "Nhập dữ liệu")}
               {tab(`/customers/${customerId}/ledger`, "Sổ theo ngày")}
               {tab(`/customers/${customerId}/review`, "Hàng chờ duyệt")}
+              {tab(`/customers/${customerId}/findings`, "Việc cần xử lý")}
             </nav>
           </>
         )}

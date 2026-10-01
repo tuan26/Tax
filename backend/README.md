@@ -55,6 +55,8 @@ trigger chặn sửa/xóa dữ liệu gốc (kể cả với role quản trị),
 trên bảng nghiệp vụ, Row Level Security theo tenant với `FORCE`, khóa ngoại kép `(tenant_id, id)`
 để không tham chiếu chéo tenant.
 
+Deploy pilot: xem `../docs/deploy.md`.
+
 Bảng vận hành không có audit: `user_session`, `processing_job`, `activity_log`.
 
 ## Chỉ số pilot
@@ -79,4 +81,7 @@ Tách theo `source_type` (ZALO_API, ZALO_MANUAL, ...). Đọc STOR cùng silent_
 - `app/domain/`: đọc số tiền, ngày, gom tin, chuẩn hóa bản ghi, bộ chấm điểm.
 - `app/pipeline.py`: DB ↔ lõi. Quyết định đã có không bao giờ bị engine ghi đè.
 - `app/review.py`: thao tác của kế toán. Chỉ thêm quyết định mới, đánh dấu quyết định cũ hết hiệu lực.
+- `app/domain/rules.py`: rule DQ-01 (khoản chi chưa có chứng từ đi kèm), DQ-02 (có thể trùng), DQ-03 (chứng từ
+  không có ngày, số khách nhắn khác số đã chốt). Chỉ chạy trên bản ghi đã xác nhận hoặc đủ chắc.
+- `app/findings.py`: phát hiện, ghép tay, đóng và mở lại, tin nhắn đòi chứng từ.
 - `app/api.py`: HTTP API. `app/ai_outbound.py`: cổng duy nhất ra AI nước ngoài.

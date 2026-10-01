@@ -125,6 +125,14 @@ def extract_fields(text: str) -> dict:
         digits = re.sub(r"\s", "", tm.group(1))
         out["seller_tax_id"] = _sv(digits, 0.9 if mst_checksum_ok(digits) else 0.6)
 
+    # nội dung chuyển khoản / diễn giải
+    for i, fl in enumerate(folded_lines):
+        if contains_any(fl, ("noi dung", "dien giai")) and ":" in lines[i]:
+            note = lines[i].split(":", 1)[1].strip()
+            if note:
+                out["description"] = _sv(note, 0.7)
+            break
+
     # tên người bán
     name = None
     for i, fl in enumerate(folded_lines):

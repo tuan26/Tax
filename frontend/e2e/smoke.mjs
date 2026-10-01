@@ -29,7 +29,7 @@ await shot("01-customers");
 await page.click("a:has-text('Nhập dữ liệu')");
 await page.waitForSelector("#chat-text");
 await page.fill("#business-date", "2026-10-03");
-await page.setInputFiles("#file-input", [join(here, "hd_tanphat.jpg"), join(here, "hd_kimlong.jpg"), join(here, "phieu_mo.jpg")]);
+await page.setInputFiles("#file-input", [join(here, "hd_tanphat.jpg"), join(here, "hd_kimlong.jpg"), join(here, "phieu_mo.jpg"), join(here, "ck_5tr.jpg"), join(here, "hd_5tr.jpg")]);
 await page.fill("#chat-text", "2tr5\ntiền thịt\nDoanh thu hôm nay 12tr5\nok em nhé\nphiếu gas gửi nhầm nhé");
 await shot("02-import-filled");
 await page.click("button:has-text('Lưu đợt nhập')");
@@ -39,7 +39,7 @@ await shot("03-import-done");
 await page.click("a:has-text('Sang hàng chờ duyệt')");
 await page.waitForSelector("text=/Còn \\d+ mục/");
 const log = [];
-for (let step = 1; step <= 12; step++) {
+for (let step = 1; step <= 20; step++) {
   await page.waitForTimeout(600);
   if (await page.locator("text=Không còn mục nào chờ duyệt").count()) break;
   const heading = await page.locator("main h1 + span").innerText();
@@ -66,6 +66,26 @@ for (let step = 1; step <= 12; step++) {
   if (await alert.count()) log.push("LỖI: " + (await alert.innerText()));
 }
 await shot("05-review-empty");
+
+// Việc cần xử lý: chuyển khoản 5tr chưa có chứng từ → tạo tin nhắn → ghép với hóa đơn 5tr.
+await page.click("a:has-text('Việc cần xử lý')");
+await page.waitForSelector("text=/Đang mở \\(\\d+\\)/");
+await page.waitForTimeout(800);
+await shot("09-findings");
+const transferCard = page.locator("article", { hasText: "Chuyển khoản 5.000.000đ" });
+if (!(await transferCard.count())) throw new Error("Không thấy phát hiện cho chuyển khoản 5.000.000đ");
+await transferCard.locator("input[type=checkbox]").check();
+await page.click("button:has-text('Tạo tin nhắn đòi chứng từ')");
+await page.waitForSelector("#request-text");
+log.push("tin nhắn: " + (await page.locator("#request-text").inputValue()).replace(/\n/g, " | "));
+await shot("10-request-text");
+await transferCard.locator("button:has-text('Ghép chứng từ')").click();
+await transferCard.locator("button:has-text('Xác nhận ghép')").first().click();
+await page.waitForTimeout(1000);
+await page.click("button:has-text('Đã xử lý')");
+await page.waitForTimeout(500);
+await shot("11-findings-resolved");
+log.push("đã xử lý: " + (await page.locator("article").count()) + " việc");
 
 await page.click("a:has-text('Sổ theo ngày')");
 await page.fill("#month", "2026-10");

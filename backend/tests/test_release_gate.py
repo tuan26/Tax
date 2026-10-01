@@ -72,7 +72,7 @@ def test_storage_never_overwrites(storage):
 # [3] -----------------------------------------------------------------------
 
 AUDITED = ["customer", "import_batch", "message", "attachment", "extraction", "ai_call", "grouping_run",
-           "message_group", "item_decision", "record"]
+           "message_group", "item_decision", "record", "finding", "match"]
 
 
 def test_every_write_is_audited(client, pg, tenants):

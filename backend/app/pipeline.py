@@ -257,6 +257,9 @@ def renormalize(conn, tenant_id, customer_id):
         if gk not in active_groups and row["status"] == "ACTIVE":
             conn.execute("UPDATE record SET status='MERGED', review_required=false, updated_at=now() WHERE id=%s",
                          (row["id"],))
+    from .findings import run_rules  # tránh vòng import
+
+    run_rules(conn, tenant_id, customer_id)
 
 
 # --------------------------------------------------------------------------- entry

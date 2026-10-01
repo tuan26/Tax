@@ -46,6 +46,7 @@ export default function CustomersPage() {
                 <tr>
                   <th>Hộ</th>
                   <th className="right">Chờ duyệt</th>
+                  <th className="right">Việc cần xử lý</th>
                   <th>Giờ chốt ngày</th>
                   <th />
                 </tr>
@@ -62,6 +63,13 @@ export default function CustomersPage() {
                       </td>
                       <td className="right num">
                         {pending > 0 ? <span className="chip warn">{pending}</span> : <span className="chip ok">0</span>}
+                      </td>
+                      <td className="right num">
+                        {(c.open_findings ?? 0) > 0 ? (
+                          <Link href={`/customers/${c.id}/findings`} className="chip warn">{c.open_findings}</Link>
+                        ) : (
+                          <span className="chip ok">0</span>
+                        )}
                       </td>
                       <td className="num">{c.business_day_cutoff}</td>
                       <td className="right">
