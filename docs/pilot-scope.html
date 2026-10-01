@@ -1,0 +1,295 @@
+<title>Pilot kế toán dùng thật</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lora:wght@600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: sổ cái một cột, bản vẽ kiến trúc chạy ngang theo dòng dữ liệu, câu hỏi nhóm theo chủ đề */
+:root {
+  --bg: #f6f7f4;
+  --surface: #ffffff;
+  --fg: #1d2421;
+  --muted: #5b6661;
+  --line: #d8ddd8;
+  --accent: #1f6b57;
+  --accent-soft: #e2efe9;
+  --crit: #b3261e;
+  --crit-soft: #fbe9e7;
+  --warn: #9a5b00;
+  --warn-soft: #fdf0dc;
+  --info: #5b5f00;
+  --info-soft: #f5f4d6;
+  --font-display: "Lora", Georgia, "Times New Roman", serif;
+  --font-body: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121614; --surface: #1a201d; --fg: #e3e8e5; --muted: #9aa5a0; --line: #2d3532;
+    --accent: #6cc4a8; --accent-soft: #1d3a31;
+    --crit: #f28b82; --crit-soft: #3a1f1d; --warn: #f0b45c; --warn-soft: #382a14; --info: #d6d27a; --info-soft: #2f2e15;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121614; --surface: #1a201d; --fg: #e3e8e5; --muted: #9aa5a0; --line: #2d3532;
+  --accent: #6cc4a8; --accent-soft: #1d3a31;
+  --crit: #f28b82; --crit-soft: #3a1f1d; --warn: #f0b45c; --warn-soft: #382a14; --info: #d6d27a; --info-soft: #2f2e15;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.65 var(--font-body); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: grid; gap: 56px; }
+h1, h2 { font-family: var(--font-display); text-wrap: balance; line-height: 1.25; margin: 0; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.45rem; }
+h3 { font-size: 1rem; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+section { display: grid; gap: 18px; min-width: 0; }
+.lead { color: var(--muted); font-size: 1.05rem; }
+header { display: grid; gap: 12px; }
+.status { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+.chip { font-size: .75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.crit { background: var(--crit-soft); color: var(--crit); }
+.chip.info { background: var(--info-soft); color: var(--info); }
+code, .mono { font-family: var(--font-mono); font-size: .82em; }
+
+/* Scope */
+.scope { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.scope > div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.scope ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.scope .in h3 { color: var(--accent); }
+.scope .out h3 { color: var(--muted); }
+
+/* Architecture flow */
+.flow-scroll { overflow-x: auto; padding-bottom: 6px; }
+.flow { display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 0; min-width: 960px; }
+.stage { display: grid; grid-template-rows: auto 1fr; gap: 10px; padding: 0 10px; position: relative; }
+.stage + .stage::before { content: "→"; position: absolute; left: -9px; top: 46%; color: var(--accent); font-weight: 700; font-size: 1.1rem; }
+.stage-h { font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; font-weight: 700; color: var(--muted); border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+.stage-b { display: grid; gap: 8px; align-content: start; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: .82rem; line-height: 1.4; }
+.box b { display: block; font-size: .85rem; }
+.box small { color: var(--muted); }
+.box.v1 { border-left: 3px solid var(--accent); }
+.box.later { border-style: dashed; color: var(--muted); }
+.box.human { background: var(--warn-soft); border-color: transparent; }
+.box.core { background: var(--accent-soft); border-color: transparent; }
+.cross { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+.cross .box { background: transparent; border-style: dotted; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--line); display: inline-block; }
+.sw.v1 { border-left: 3px solid var(--accent); background: var(--surface); }
+.sw.later { border-style: dashed; }
+.sw.human { background: var(--warn-soft); border-color: transparent; }
+.sw.core { background: var(--accent-soft); border-color: transparent; }
+
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.principles div { border-top: 2px solid var(--line); padding-top: 10px; display: grid; gap: 4px; }
+.principles b { font-size: .92rem; }
+.principles p { font-size: .88rem; color: var(--muted); }
+
+.diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; }
+
+/* Tables */
+.tbl-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 820px; font-size: .86rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td .mono { white-space: nowrap; color: var(--accent); font-weight: 500; }
+td.ex { color: var(--muted); font-style: italic; }
+
+.guard { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.guard li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+.guard .n { font-family: var(--font-mono); font-size: .8rem; color: var(--accent); padding-top: 2px; }
+
+/* Q&A */
+.qgroup { display: grid; gap: 10px; }
+.qgroup h3 { font-size: .8rem; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: 48px 1fr; gap: 4px 12px; }
+.q.first { border-color: var(--warn); }
+.q .id { font-family: var(--font-mono); font-size: .82rem; color: var(--accent); grid-row: span 3; padding-top: 2px; }
+.q .text { font-weight: 600; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.q .why, .q .rec { font-size: .86rem; min-width: 0; }
+.q .why { color: var(--muted); }
+.q .rec b { color: var(--accent); font-weight: 600; }
+
+.steps { counter-reset: s; display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 32px 1fr; gap: 10px; }
+.steps li::before { content: counter(s); font-family: var(--font-mono); width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: .8rem; }
+
+@media (max-width: 640px) {
+  h1 { font-size: 1.6rem; }
+  .scope { grid-template-columns: 1fr; }
+  .q { grid-template-columns: 1fr; }
+  .q .id { grid-row: auto; }
+}
+</style>
+<style>
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.cols > div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.cols h3 { font-size: .95rem; }
+.cols ul { margin: 0; padding-left: 18px; font-size: .86rem; display: grid; gap: 4px; }
+.cols p { font-size: .86rem; color: var(--muted); }
+.screen-n { font-family: var(--font-mono); font-size: .78rem; color: var(--accent); }
+.chip.ok { background: var(--accent-soft); color: var(--accent); }
+pre.api { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font: .8rem/1.6 var(--font-mono); margin: 0; }
+.risk { border-left: 3px solid var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 12px 14px; display: grid; gap: 4px; font-size: .88rem; }
+.risk b { color: var(--warn); }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Phạm vi pilot · 01/10/2026</div>
+  <h1>Pilot kế toán dùng thật</h1>
+  <p class="lead">2 kế toán × 2–3 hộ × 2 tuần, trên dữ liệu thật, trong lúc họ đang làm việc thật. Pilot trả lời ba câu: có tiết kiệm thời gian không, chỗ nào gom tin và AI gây khó chịu nhất, và kế toán có muốn dùng cho hộ thứ hai, thứ ba không.</p>
+  <div class="status">
+    <span class="chip warn">3 quyết định cần chốt trước khi build</span>
+    <span class="chip">5 màn hình</span>
+    <span class="chip">3 rule</span>
+  </div>
+</header>
+
+<section>
+  <div class="eyebrow">Ngưỡng tối thiểu để đưa cho kế toán</div>
+  <h2>Ba điều không được thỏa hiệp, còn lại sửa theo feedback</h2>
+  <div class="cols">
+    <div><h3>Không mất dữ liệu</h3><p>Tin nhắn, ảnh và đoạn chat dán vào được lưu nguyên bản, không bao giờ sửa hay xóa. Mọi thứ khác đều tạo lại được từ bản gốc.</p></div>
+    <div><h3>Không tự kết luận khi không chắc</h3><p>Quyết định nào không đạt HIGH đều vào hàng chờ duyệt. Bộ gom tin phải qua 20 ca trong spec với tỷ lệ tự ghép sai bằng 0 trước khi đưa cho kế toán.</p></div>
+    <div><h3>Mọi sửa đều được lưu</h3><p>Mỗi lần xác nhận, sửa, tách, gộp, bác bỏ sinh một dòng audit có người làm, thời điểm, giá trị cũ, giá trị mới. Đây cũng là dữ liệu đo % phải sửa.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Ba điểm phải chốt trước khi build</div>
+  <h2>Những chỗ có thể làm hỏng pilot</h2>
+  <div class="risk"><b>1 · Nhập thủ công làm mất tín hiệu thời gian</b><span>Kéo ảnh từ Zalo PC và dán đoạn chat thường không giữ được giờ gửi chính xác và người gửi. Bộ gom tin trong spec dựa nhiều vào thứ tự và khoảng cách thời gian. Ở chế độ nhập tay, kế toán sẽ chọn ngày cho từng đợt nhập, và hệ thống sẽ đưa nhiều item vào hàng chờ hơn. Mọi chỉ số phải tách theo nguồn (Zalo OA hay nhập tay), nếu không sẽ đánh giá sai chất lượng gom tin.</span></div>
+  <div class="risk"><b>2 · Dữ liệu thật đi qua OCR và AI nào</b><span>Pipeline hybrid chưa có, ý kiến pháp lý (Q36) chưa có. Pilot với dữ liệu thật cần một trong hai: hộ ký đồng ý cho dữ liệu được xử lý bởi dịch vụ AI nước ngoài có cam kết không lưu và không huấn luyện, và xóa toàn bộ sau pilot; hoặc chỉ dùng OCR trong nước. Không chốt điều này thì không được bắt đầu pilot.</span></div>
+  <div class="risk"><b>3 · Ai chạy và host app</b><span>Kế toán cần một địa chỉ web truy cập được, có đăng nhập, có sao lưu. Code viết ở đây chưa có chỗ chạy. Cần một người deploy, tốt nhất trên cloud trong nước, và theo dõi lỗi trong 2 tuần pilot.</span></div>
+</section>
+
+<section>
+  <div class="eyebrow">Màn hình</div>
+  <h2>Năm màn hình, theo đúng thứ tự kế toán làm việc</h2>
+  <div class="cols">
+    <div><span class="screen-n">M1</span><h3>Danh sách hộ</h3><ul><li>Tên hộ, giờ chốt ngày</li><li>Số item chờ duyệt, số việc cần xử lý</li><li>Tạo hộ mới</li></ul></div>
+    <div><span class="screen-n">M2</span><h3>Nhập dữ liệu</h3><ul><li>Kéo thả nhiều ảnh, PDF</li><li>Dán đoạn chat</li><li>Chọn ngày và người gửi cho đợt nhập</li><li>Hộp thư Zalo OA nếu spike kịp</li></ul></div>
+    <div><span class="screen-n">M3</span><h3>Sổ theo ngày</h3><ul><li>Từng ngày: thu, chi, số chứng từ</li><li>Mỗi bản ghi có nhãn trạng thái</li><li>Bấm vào xem ảnh và tin gốc</li><li>Xuất Excel đơn giản</li></ul></div>
+    <div><span class="screen-n">M4</span><h3>Hàng chờ duyệt</h3><ul><li>Ảnh gốc bên trái, các trường bên phải</li><li>Độ tin cậy cho từng quyết định</li><li>Xác nhận, sửa, tách nhóm, gộp nhóm, gán vào nhóm khác</li><li>Phím tắt để duyệt nhanh</li></ul></div>
+    <div><span class="screen-n">M5</span><h3>Việc cần xử lý</h3><ul><li>Phát hiện kèm bằng chứng</li><li>Đã có chứng từ · Không cần (ghi lý do) · Yêu cầu bổ sung</li><li>Copy tin nhắn đòi chứng từ để gửi Zalo</li><li>Đề xuất ghép dạng ✓/? và nút xác nhận</li></ul></div>
+  </div>
+  <p>Không có dashboard, không có màn hình cài đặt, không có phân quyền. Tài khoản cho 2 kế toán được tạo sẵn.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Rule trong pilot</div>
+  <h2>Ba rule, đủ để thử vòng khép kín</h2>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Mã</th><th>Kiểm tra</th><th>Vì sao giữ</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">DQ-01</span></td><td>Khoản chi chưa có chứng từ đi kèm</td><td>Tạo ra vòng: yêu cầu bổ sung → khách gửi → đề xuất ghép → kế toán xác nhận → đóng</td></tr>
+        <tr><td><span class="mono">DQ-02</span></td><td>Chứng từ trùng (cùng file, hoặc gần trùng)</td><td>Rẻ, dễ thấy giá trị ngay</td></tr>
+        <tr><td><span class="mono">DQ-03</span></td><td>Thiếu hoặc mâu thuẫn trường (số gõ tay khác số OCR)</td><td>Phát hiện lỗi đọc, đo được chất lượng OCR</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Rule là hàm Python bình thường có mã và phiên bản, chưa cần rule engine. Sổ theo ngày chỉ cộng một lần cho các bản ghi có đề xuất ghép đang chờ xác nhận, kèm nhãn "chờ xác nhận ghép".</p>
+</section>
+
+<section>
+  <div class="eyebrow">API</div>
+  <h2>API tối thiểu (FastAPI)</h2>
+<pre class="api">POST   /customers                         tạo hộ
+GET    /customers                         danh sách + số item chờ, số việc cần xử lý
+POST   /customers/{id}/imports            ảnh + đoạn chat dán + ngày, người gửi → MESSAGE gốc
+POST   /webhooks/zalo                     (nếu spike Zalo OA kịp)
+GET    /customers/{id}/ledger?from=&to=   sổ theo ngày
+GET    /customers/{id}/review-queue       item chưa chắc, sắp theo ngày
+POST   /records/{id}/confirm              xác nhận nguyên trạng
+PATCH  /records/{id}                      sửa trường, ghi giá trị cũ vào audit
+POST   /groups/{id}/split                 tách nhóm
+POST   /groups/merge                      gộp nhóm
+POST   /items/{ref}/assign                gán item vào nhóm khác
+GET    /customers/{id}/findings           việc cần xử lý
+POST   /findings/{id}/decision            has_document | not_needed (+lý do) | request
+GET    /findings/{id}/request-text        tin nhắn đòi chứng từ để copy
+POST   /matches/{id}/confirm | /reject    xác nhận ghép thì phát hiện mới đóng
+GET    /customers/{id}/export.xlsx        xuất sổ
+POST   /activity                          nhịp hoạt động để đo thời gian</pre>
+  <p>Mọi API ghi đều sinh một dòng <code>audit_event</code> trong cùng transaction. Không có API xóa.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Dữ liệu</div>
+  <h2>Mô hình dữ liệu tối thiểu</h2>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Bảng</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <tr><td><code>app_user</code>, <code>customer</code>, <code>sender</code></td><td>Không có văn phòng, không có vai trò</td></tr>
+        <tr><td><code>import_batch</code></td><td>Một lần nhập tay: ai nhập, ngày được chọn, nguồn. Dùng để tách chỉ số theo nguồn</td></tr>
+        <tr><td><code>message</code>, <code>attachment</code></td><td>Theo <code>messages.schema.json</code>. Chỉ thêm, không sửa</td></tr>
+        <tr><td><code>extraction</code>, <code>ai_call</code></td><td>Kết quả OCR và AI, có engine và phiên bản. Log mọi lần gọi dịch vụ ngoài</td></tr>
+        <tr><td><code>message_group</code>, <code>group_item</code></td><td>Nhóm và item, có role và status CONFIDENT / AMBIGUOUS / UNMATCHED</td></tr>
+        <tr><td><code>record</code></td><td><code>fields_ai</code>, <code>fields_confirmed</code>, <code>decision_confidence</code>, status, supersedes</td></tr>
+        <tr><td><code>match</code></td><td>Điểm từng tiêu chí, <code>evidence</code>, status</td></tr>
+        <tr><td><code>finding</code>, <code>finding_evidence</code></td><td>rule_id và rule_version dạng chuỗi, status theo vòng khép kín</td></tr>
+        <tr><td><code>audit_event</code>, <code>activity_log</code></td><td>Mọi thay đổi; nhịp hoạt động theo hộ để đo phút làm việc</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Cắt khỏi pilot: <code>office</code>, <code>tax_profile</code>, <code>period</code>, bảng <code>rule</code> và <code>rule_run</code>.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Ngoài pilot</div>
+  <h2>Cắt hẳn</h2>
+  <div class="cols">
+    <div><ul><li>Đa văn phòng, phân quyền</li><li>Pipeline hybrid, bộ ẩn danh (thay bằng đồng ý bằng văn bản và xóa sau pilot)</li><li>Gửi tin qua Zalo OA (thay bằng copy)</li></ul></div>
+    <div><ul><li>XML hóa đơn, sao kê, POS</li><li>Rule thuế, DQ-04 đến DQ-06</li><li>Rule engine có phiên bản trong DB</li></ul></div>
+    <div><ul><li>Dashboard, báo cáo đẹp, mẫu sổ</li><li>Mobile</li><li>Tự đóng phát hiện</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Đo</div>
+  <h2>Cách đo từng chỉ số</h2>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Chỉ số</th><th>Đo bằng</th></tr></thead>
+      <tbody>
+        <tr><td>Phút xử lý mỗi hộ mỗi ngày và mỗi kỳ</td><td><code>activity_log</code> trong app, cộng phần kế toán tự ghi cho việc làm ngoài app. Baseline: đo 1 tuần trên chính các hộ đó trước pilot</td></tr>
+        <tr><td>% bản ghi phải sửa</td><td>Bản ghi có <code>fields_confirmed</code> khác <code>fields_ai</code> / tổng bản ghi</td></tr>
+        <tr><td>% nhóm sai</td><td>Số lần tách, gộp, gán lại / tổng nhóm. Tách riêng theo nguồn nhập</td></tr>
+        <tr><td>% item vào hàng chờ</td><td>Item AMBIGUOUS, UNMATCHED cần duyệt / tổng item</td></tr>
+        <tr><td>Chứng từ thiếu bị bỏ sót</td><td>Cuối kỳ kế toán ghi lại các khoản thiếu họ tự phát hiện mà app không báo</td></tr>
+        <tr><td>Phát hiện hữu ích</td><td>Tỷ lệ phát hiện được chọn "Yêu cầu bổ sung" hoặc "Đã có chứng từ" thay vì "Không cần"</td></tr>
+        <tr><td>Muốn dùng tiếp</td><td>Cuối tuần 2 hỏi một câu: có muốn thêm hộ thứ ba vào không, và họ có thật sự thêm không</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Lịch</div>
+  <h2>Build khoảng 2–3 tuần cho một người, rồi chạy pilot 2 tuần</h2>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Tuần</th><th>Việc</th><th>Xong khi</th></tr></thead>
+      <tbody>
+        <tr><td>Song song</td><td>Tìm 2 kế toán, ký đồng ý với hộ, đo baseline 1 tuần</td><td>Có số phút baseline cho từng hộ</td></tr>
+        <tr><td>Build 1</td><td>Nhập dữ liệu, lưu gốc, OCR, gom tin, chuẩn hóa, bộ chấm điểm spec</td><td>20 ca spec qua, tỷ lệ tự ghép sai bằng 0</td></tr>
+        <tr><td>Build 2</td><td>Sổ theo ngày, hàng chờ duyệt, audit, xuất Excel</td><td>Một người ngoài nhập được 1 ngày dữ liệu thật không cần hướng dẫn</td></tr>
+        <tr><td>Build 3</td><td>3 rule, việc cần xử lý, đề xuất ghép, đo thời gian, deploy</td><td>Vòng khép kín chạy trọn trên dữ liệu mẫu</td></tr>
+        <tr><td>Pilot 1–2</td><td>Kế toán dùng hằng ngày. Họp 15 phút mỗi tuần. Sửa lỗi chặn trong ngày</td><td>Có đủ 7 chỉ số và quyết định đi tiếp hay không</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Mốc 1–2 tuần build chỉ đạt được nếu cắt thêm: bỏ đề xuất ghép (kế toán tự chọn chứng từ để đóng phát hiện) và bỏ xuất Excel.</p>
+</section>
+
+</div>
