@@ -445,8 +445,7 @@
       "required": [
         "extraction_id",
         "attachment_id",
-        "engine",
-        "doc_type"
+        "engine"
       ],
       "additionalProperties": false,
       "properties": {
@@ -459,6 +458,21 @@
         "engine": {
           "description": "Engine và phiên bản sinh ra kết quả, ví dụ 'fixture', 'manual', 'ocr-x@1.2'.",
           "type": "string"
+        },
+        "status": {
+          "description": "ok: đọc được; empty: engine chạy nhưng không đọc ra gì; failed: lỗi hoặc quá thời gian. Ảnh có extraction failed vẫn giữ file gốc và luôn vào hàng chờ duyệt.",
+          "enum": [
+            "ok",
+            "empty",
+            "failed"
+          ],
+          "default": "ok"
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "doc_type": {
           "$ref": "#/$defs/scored_value"
@@ -487,8 +501,40 @@
         },
         "transfer_note": {
           "$ref": "#/$defs/scored_value"
+        },
+        "seller_tax_id": {
+          "$ref": "#/$defs/scored_value"
+        },
+        "raw_text": {
+          "description": "Văn bản OCR thô, để kế toán và người phát triển đối chiếu khi engine đọc sai.",
+          "type": [
+            "string",
+            "null"
+          ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "empty",
+                  "failed"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "else": {
+            "required": [
+              "doc_type"
+            ]
+          }
+        }
+      ]
     }
   }
 }

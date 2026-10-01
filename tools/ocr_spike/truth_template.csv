@@ -1,0 +1,4 @@
+file,category,doc_type,total_amount,document_date,seller_tax_id,seller_name
+hd_001.jpg,in_thang,invoice,2350000,2026-10-01,0100109106,Công ty TNHH Vật tư Bình An
+ck_001.jpg,chuyen_khoan,bank_transfer,5000000,2026-10-01,,
+pt_001.jpg,viet_tay,handwritten_receipt,1240000,,,Cửa hàng Kim Long

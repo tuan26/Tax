@@ -29,18 +29,26 @@ python -m app.worker                                       # xử lý lại đ�
 ```
 
 `FOREIGN_AI_ENABLED` mặc định tắt. Chỉ bật khi đã có ý kiến pháp lý về pipeline hybrid.
-`OCR_PROVIDER` mặc định `none`: ảnh vào hàng chờ để kế toán nhập. Chưa có OCR trong nước nào được duyệt (Q35).
+`OCR_PROVIDER` mặc định `none`: ảnh vào hàng chờ để kế toán nhập. `tesseract` có sẵn làm mốc so sánh; chọn provider cho pilot bằng spike trong `../tools/ocr_spike/`.
 
 ## Pilot release gate
 
 | Gate | Kiểm bằng | Trạng thái |
 |---|---|---|
-| Dữ liệu gốc chỉ thêm | `test_raw_data_is_append_only`, `test_decisions_only_superseded_never_rewritten`, `test_storage_never_overwrites` | Qua |
-| Spec gom tin, 0 lần tự ghép sai | `tests/test_spec_suite.py` (22 ca: 20 Zalo API, 2 nhập tay) | Qua |
-| 100% thao tác ghi có audit | `test_every_write_is_audited` | Qua |
-| Cô lập tenant | `test_tenant_isolation_api`, `test_tenant_isolation_db`, `test_app_role_is_not_superuser` | Qua |
-| Backup và restore | chưa có | Tuần 2 |
-| AI nước ngoài fail-closed | `test_foreign_ai_fail_closed`, `test_default_config_disables_foreign_ai` | Qua |
+| 1. Dữ liệu gốc chỉ thêm | `test_raw_data_is_append_only`, `test_decisions_only_superseded_never_rewritten`, `test_storage_never_overwrites` | Qua |
+| 2. Spec gom tin, 0 lần tự ghép sai | `tests/test_spec_suite.py` (22 ca: 20 Zalo API, 2 nhập tay) | Qua |
+| 3. 100% thao tác ghi có audit | `test_every_write_is_audited` | Qua |
+| 4. Cô lập tenant | `test_tenant_isolation_api`, `test_tenant_isolation_db`, `test_app_role_is_not_superuser` | Qua |
+| 5. Backup và restore | `tests/test_backup_restore.py` (khôi phục thật, backup bị sửa thì từ chối, thiếu file thì phát hiện) | Qua |
+| 6. AI nước ngoài fail-closed | `test_foreign_ai_fail_closed`, `test_default_config_disables_foreign_ai` | Qua |
+| 7. OCR lỗi giảm cấp an toàn | `tests/test_ocr_degradation.py` (lỗi, quá thời gian, trả về rác, độ tin cậy thấp) | Qua |
+
+Gate 5 dùng `ops/backup.sh` và `ops/restore.sh`. Bước kiểm tra sau khôi phục (`app/backup_verify.py`)
+xác nhận file gốc khớp sha256, trigger chỉ-thêm và audit còn đủ, RLS còn bật FORCE.
+
+Gate 7: OCR lỗi ở một ảnh không làm hỏng lượt xử lý; ảnh vẫn thành giao dịch chờ duyệt với file gốc
+còn nguyên; giá trị OCR dưới 0,6 chỉ là gợi ý, không thành giá trị; `review.finding_inputs` trả về None
+cho mọi bản ghi chưa chắc, nên rule tuần 2 không thể sinh phát hiện từ dữ liệu đoán.
 
 Các đảm bảo nằm ở tầng DB (`app/migrations/001_init.sql`), không phụ thuộc code API:
 trigger chặn sửa/xóa dữ liệu gốc (kể cả với role quản trị), trigger audit cho mọi INSERT/UPDATE

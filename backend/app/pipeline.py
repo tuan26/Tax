@@ -17,6 +17,7 @@ from psycopg.types.json import Jsonb
 from .domain.grouping import (AMBIGUOUS, CONFIDENT, ENGINE_VERSION, NONE_CANDIDATE, UNMATCHED, Group,
                               GroupingResult, Link, Unmatched, group_messages)
 from .domain.normalize import normalize
+from .extraction import run_ocr
 
 
 def _iso(v):
@@ -261,17 +262,20 @@ def renormalize(conn, tenant_id, customer_id):
 # --------------------------------------------------------------------------- entry
 
 
-def process_customer(conn, tenant_id, customer_id, ocr=None, storage=None):
-    """Chạy trong transaction có actor_kind = engine."""
+def process_customer(conn, tenant_id, customer_id, ocr=None, storage=None, ocr_timeout_seconds=20.0):
+    """Chạy trong transaction có actor_kind = engine.
+
+    OCR lỗi ở một ảnh chỉ ảnh hưởng ảnh đó: lần thử được ghi lại với status failed, ảnh vẫn được
+    gom và bản ghi của nó vào hàng chờ duyệt. Lỗi OCR không bao giờ làm hỏng cả lượt xử lý.
+    """
     if ocr is not None and storage is not None and ocr.name != "none":
         pending = conn.execute(
             "SELECT a.* FROM attachment a JOIN message m ON m.id = a.message_id LEFT JOIN extraction e"
             " ON e.attachment_id = a.id WHERE m.customer_id = %s AND e.id IS NULL", (customer_id,)).fetchall()
         for a in pending:
-            fields = ocr.extract(storage.get(a["storage_key"]), a["mime_type"])
-            if fields:
-                conn.execute("INSERT INTO extraction (tenant_id, attachment_id, engine, fields) VALUES (%s,%s,%s,%s)",
-                             (tenant_id, a["id"], ocr.name, Jsonb(fields)))
+            outcome = run_ocr(ocr, storage.get(a["storage_key"]), a["mime_type"], ocr_timeout_seconds)
+            conn.execute("INSERT INTO extraction (tenant_id, attachment_id, engine, fields) VALUES (%s,%s,%s,%s)",
+                         (tenant_id, a["id"], ocr.name, Jsonb(outcome.to_row(ocr.name))))
     doc = load_document(conn, customer_id)
     run_id = conn.execute(
         "INSERT INTO grouping_run (tenant_id, customer_id, engine_version, message_count) VALUES (%s,%s,%s,%s)"

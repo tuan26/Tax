@@ -12,7 +12,7 @@ from .storage import ImmutableStorage
 log = logging.getLogger("tax.worker")
 
 
-def run_once(db, storage, ocr) -> bool:
+def run_once(db, storage, ocr, ocr_timeout_seconds=20.0) -> bool:
     with db.tx(actor_kind="system") as conn:
         job = conn.execute("SELECT * FROM claim_job()").fetchone()
     if job is None:
@@ -20,7 +20,7 @@ def run_once(db, storage, ocr) -> bool:
     try:
         with db.tx(job["tenant_id"], None, "engine") as conn:
             conn.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (str(job["customer_id"]),))
-            process_customer(conn, job["tenant_id"], job["customer_id"], ocr, storage)
+            process_customer(conn, job["tenant_id"], job["customer_id"], ocr, storage, ocr_timeout_seconds)
             conn.execute("UPDATE processing_job SET status='done', finished_at=now() WHERE id=%s", (job["job_id"],))
     except Exception as e:
         log.exception("job %s failed", job["job_id"])
@@ -35,7 +35,7 @@ def main():
     s = load_settings()
     db, storage, ocr = Database(s.database_url), ImmutableStorage(s.storage_dir), provider_for(s.ocr_provider)
     while True:
-        if not run_once(db, storage, ocr):
+        if not run_once(db, storage, ocr, s.ocr_timeout_seconds):
             time.sleep(5)
 
 

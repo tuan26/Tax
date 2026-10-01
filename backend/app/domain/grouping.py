@@ -30,6 +30,8 @@ UNMATCHED = "UNMATCHED"
 NONE_CANDIDATE = "NONE"
 
 DOCUMENT_TYPES = {"invoice", "receipt", "handwritten_receipt", "bank_transfer"}
+# Chỉ ảnh được xác định rõ là không phải chứng từ mới bị loại. Loại "unknown" vẫn là chứng từ chờ duyệt.
+NON_DOCUMENT_TYPES = {"other"}
 NOISE_KINDS = {"sticker", "system", "deleted", "link"}
 UNSUPPORTED_KINDS = {"voice", "unsupported"}
 
@@ -244,7 +246,7 @@ class _Engine:
         self.sha_owner[sha] = it.ref
 
         doc_type = it.ext("doc_type")
-        if doc_type is not None and doc_type not in DOCUMENT_TYPES:
+        if doc_type in NON_DOCUMENT_TYPES:
             conf = (it.extraction or {}).get("doc_type", {}).get("confidence", 0)
             self.unmatched.append(Unmatched(it.ref, "non_document", conf < 0.8))
             return

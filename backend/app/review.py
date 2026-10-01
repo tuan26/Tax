@@ -261,3 +261,24 @@ def confirm_record(conn, record_id, fields: dict | None, user_id):
         (Jsonb(final), user_id, record_id))
 
 
+
+
+def finding_inputs(record) -> dict | None:
+    """Dữ liệu một bản ghi được phép dùng để sinh phát hiện (rule DQ-xx, tuần 2).
+
+    Chỉ bản ghi đã được kế toán xác nhận, hoặc mọi quyết định cốt lõi đạt HIGH và không có lỗi OCR.
+    Bản ghi còn chờ duyệt trả về None: không sinh phát hiện dựa trên dữ liệu chưa chắc.
+    """
+    if record["status"] != "ACTIVE":
+        return None
+    if record["confirmed_at"] is not None:
+        return dict(record["fields_confirmed"])
+    if record["review_required"]:
+        return None
+    reasons = set(record["review_reasons"] or [])
+    if reasons & {"ocr_failed", "ocr_empty", "amount_low_confidence"}:
+        return None
+    conf = record["decision_confidence"]
+    if any((conf.get(k) or 0) < 0.90 for k in ("message_group", "transaction_type", "amount", "posting_date")):
+        return None
+    return effective_fields(record)

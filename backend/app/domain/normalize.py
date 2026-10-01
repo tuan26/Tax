@@ -18,6 +18,8 @@ GROUP_CONFIDENCE = {CONFIDENT: 0.95, AMBIGUOUS: 0.5}
 DOCUMENT_DEFAULT_DATE_CONFIDENCE = 0.7
 SELF_DECLARED_CONFIDENCE = 0.95
 DATE_ANNOTATION_CONFIDENCE = 0.92
+# OCR dưới ngưỡng này chỉ là gợi ý cho kế toán, không được thành giá trị của bản ghi.
+OCR_SUGGESTION_ONLY_BELOW = 0.60
 
 
 @dataclass
@@ -115,14 +117,21 @@ class _Normalizer:
             else:
                 ttype = Decision(None, None)
         elif types and types <= {"invoice", "receipt", "handwritten_receipt"}:
-            conf = min(it.extraction["doc_type"]["confidence"] for it in docs if it.extraction)
+            conf = min(it.extraction["doc_type"]["confidence"] for it in docs
+                       if it.extraction and it.extraction.get("doc_type"))
             ttype = Decision("EXPENSE", min(conf, 0.95))
         else:
             ttype = Decision(None, None)
 
+        failed = [it for it in docs if (it.extraction or {}).get("status") in ("failed", "empty")]
+        if failed:
+            reasons.append("ocr_failed" if any(it.extraction["status"] == "failed" for it in failed) else "ocr_empty")
+
         # số tiền
-        ocr = [(it.ext("total_amount"), it.extraction["total_amount"]["confidence"])
-               for it in docs if it.ext("total_amount") is not None]
+        ocr_all = [(it.ext("total_amount"), it.extraction["total_amount"]["confidence"])
+                   for it in docs if it.ext("total_amount") is not None]
+        ocr = [(v, c) for v, c in ocr_all if c >= OCR_SUGGESTION_ONLY_BELOW]
+        ocr_guesses = sorted({v for v, c in ocr_all if c < OCR_SUGGESTION_ONLY_BELOW})
         ocr_values = {v for v, _ in ocr}
         typed = [v for l in self._links_to(g, "amount_annotation") for v in l.data.get("amounts", [])]
         typed_ambiguous = [v for l in self._links_to(g, "amount_annotation", AMBIGUOUS)
@@ -143,8 +152,11 @@ class _Normalizer:
             amount = Decision(typed[0], SELF_DECLARED_CONFIDENCE) if len(set(typed)) == 1 else Decision(
                 None, None, sorted(set(typed)))
         elif typed_ambiguous:
-            amount = Decision(None, None, sorted(set(typed_ambiguous)))
+            amount = Decision(None, None, sorted(set(typed_ambiguous) | set(ocr_guesses)))
             reasons.append("amount_unresolved")
+        elif ocr_guesses:
+            amount = Decision(None, None, ocr_guesses)
+            reasons.append("amount_low_confidence")
         else:
             amount = Decision(None, None)
             reasons.append("amount_missing")
@@ -152,7 +164,11 @@ class _Normalizer:
         # ngày chứng từ
         dated = [(it.ext("document_date"), it.extraction["document_date"]["confidence"])
                  for it in docs if it.ext("document_date") is not None]
-        doc_date = Decision(dated[0][0], dated[0][1]) if dated else Decision(None, None)
+        sure_dates = [(v, c) for v, c in dated if c >= OCR_SUGGESTION_ONLY_BELOW]
+        if sure_dates:
+            doc_date = Decision(sure_dates[0][0], sure_dates[0][1])
+        else:
+            doc_date = Decision(None, None, sorted({v for v, _ in dated}))
 
         # ngày hạch toán
         default = Decision(_iso(self._bd(first)), DOCUMENT_DEFAULT_DATE_CONFIDENCE)

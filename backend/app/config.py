@@ -17,6 +17,7 @@ class Settings:
     foreign_ai_enabled: bool
     ocr_provider: str
     max_upload_bytes: int
+    ocr_timeout_seconds: float = 20.0
 
 
 def load_settings() -> Settings:
@@ -28,4 +29,5 @@ def load_settings() -> Settings:
         foreign_ai_enabled=_bool("FOREIGN_AI_ENABLED", False),
         ocr_provider=os.environ.get("OCR_PROVIDER", "none"),
         max_upload_bytes=int(os.environ.get("MAX_UPLOAD_BYTES", str(20 * 1024 * 1024))),
+        ocr_timeout_seconds=float(os.environ.get("OCR_TIMEOUT_SECONDS", "20")),
     )

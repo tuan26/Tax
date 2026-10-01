@@ -147,7 +147,7 @@ def create_app(settings, db, storage, ocr) -> FastAPI:
         try:
             with tx(c, actor_kind="engine") as conn:
                 conn.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (str(customer_id),))
-                process_customer(conn, c.tenant_id, customer_id, ocr, storage)
+                process_customer(conn, c.tenant_id, customer_id, ocr, storage, settings.ocr_timeout_seconds)
                 conn.execute("UPDATE processing_job SET status='done', finished_at=now() WHERE id=%s", (job_id,))
             return "done"
         except Exception as e:  # dữ liệu gốc đã lưu; worker sẽ thử lại

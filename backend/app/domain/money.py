@@ -78,3 +78,28 @@ def find_amounts(text: str) -> list[Amount]:
             taken.append((start, end))
             found.append(Amount(value, start, end, m.group(0).strip()))
     return sorted(found, key=lambda a: a.start)
+
+
+_FORMAL = {"grouped", "plain", "million_words"}
+
+
+def find_formal_amounts(text: str) -> list[Amount]:
+    """Số tiền trên chứng từ in (OCR): chỉ dạng có dấu phân cách hoặc có đơn vị tiền.
+
+    Bỏ dạng gõ tắt (12tr5, 950k) vì trên chứng từ chúng thường là lỗi đọc, ví dụ "5 tr." trong "Trang".
+    """
+    folded = fold(text)
+    taken, found = [], []
+    for kind, pattern in _PATTERNS:
+        if kind not in _FORMAL:
+            continue
+        for m in pattern.finditer(folded):
+            start, end = m.span()
+            if any(start < e and s < end for s, e in taken):
+                continue
+            value = _value(kind, m)
+            if value is None or value <= 0:
+                continue
+            taken.append((start, end))
+            found.append(Amount(value, start, end, m.group(0).strip()))
+    return sorted(found, key=lambda a: a.start)
