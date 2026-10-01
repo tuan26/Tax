@@ -1,0 +1,578 @@
+<title>Kiểm tra hồ sơ thuế hộ kinh doanh — V1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lora:wght@600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: sổ cái một cột, bản vẽ kiến trúc chạy ngang theo dòng dữ liệu, câu hỏi nhóm theo chủ đề */
+:root {
+  --bg: #f6f7f4;
+  --surface: #ffffff;
+  --fg: #1d2421;
+  --muted: #5b6661;
+  --line: #d8ddd8;
+  --accent: #1f6b57;
+  --accent-soft: #e2efe9;
+  --crit: #b3261e;
+  --crit-soft: #fbe9e7;
+  --warn: #9a5b00;
+  --warn-soft: #fdf0dc;
+  --info: #5b5f00;
+  --info-soft: #f5f4d6;
+  --font-display: "Lora", Georgia, "Times New Roman", serif;
+  --font-body: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121614; --surface: #1a201d; --fg: #e3e8e5; --muted: #9aa5a0; --line: #2d3532;
+    --accent: #6cc4a8; --accent-soft: #1d3a31;
+    --crit: #f28b82; --crit-soft: #3a1f1d; --warn: #f0b45c; --warn-soft: #382a14; --info: #d6d27a; --info-soft: #2f2e15;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121614; --surface: #1a201d; --fg: #e3e8e5; --muted: #9aa5a0; --line: #2d3532;
+  --accent: #6cc4a8; --accent-soft: #1d3a31;
+  --crit: #f28b82; --crit-soft: #3a1f1d; --warn: #f0b45c; --warn-soft: #382a14; --info: #d6d27a; --info-soft: #2f2e15;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.65 var(--font-body); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: grid; gap: 56px; }
+h1, h2 { font-family: var(--font-display); text-wrap: balance; line-height: 1.25; margin: 0; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.45rem; }
+h3 { font-size: 1rem; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+section { display: grid; gap: 18px; min-width: 0; }
+.lead { color: var(--muted); font-size: 1.05rem; }
+header { display: grid; gap: 12px; }
+.status { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+.chip { font-size: .75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.crit { background: var(--crit-soft); color: var(--crit); }
+.chip.info { background: var(--info-soft); color: var(--info); }
+code, .mono { font-family: var(--font-mono); font-size: .82em; }
+
+/* Scope */
+.scope { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.scope > div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.scope ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.scope .in h3 { color: var(--accent); }
+.scope .out h3 { color: var(--muted); }
+
+/* Architecture flow */
+.flow-scroll { overflow-x: auto; padding-bottom: 6px; }
+.flow { display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 0; min-width: 960px; }
+.stage { display: grid; grid-template-rows: auto 1fr; gap: 10px; padding: 0 10px; position: relative; }
+.stage + .stage::before { content: "→"; position: absolute; left: -9px; top: 46%; color: var(--accent); font-weight: 700; font-size: 1.1rem; }
+.stage-h { font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; font-weight: 700; color: var(--muted); border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+.stage-b { display: grid; gap: 8px; align-content: start; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: .82rem; line-height: 1.4; }
+.box b { display: block; font-size: .85rem; }
+.box small { color: var(--muted); }
+.box.v1 { border-left: 3px solid var(--accent); }
+.box.later { border-style: dashed; color: var(--muted); }
+.box.human { background: var(--warn-soft); border-color: transparent; }
+.box.core { background: var(--accent-soft); border-color: transparent; }
+.cross { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+.cross .box { background: transparent; border-style: dotted; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--line); display: inline-block; }
+.sw.v1 { border-left: 3px solid var(--accent); background: var(--surface); }
+.sw.later { border-style: dashed; }
+.sw.human { background: var(--warn-soft); border-color: transparent; }
+.sw.core { background: var(--accent-soft); border-color: transparent; }
+
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.principles div { border-top: 2px solid var(--line); padding-top: 10px; display: grid; gap: 4px; }
+.principles b { font-size: .92rem; }
+.principles p { font-size: .88rem; color: var(--muted); }
+
+.diagram { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; }
+
+/* Tables */
+.tbl-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 820px; font-size: .86rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td .mono { white-space: nowrap; color: var(--accent); font-weight: 500; }
+td.ex { color: var(--muted); font-style: italic; }
+
+.guard { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.guard li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+.guard .n { font-family: var(--font-mono); font-size: .8rem; color: var(--accent); padding-top: 2px; }
+
+/* Q&A */
+.qgroup { display: grid; gap: 10px; }
+.qgroup h3 { font-size: .8rem; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: 48px 1fr; gap: 4px 12px; }
+.q.first { border-color: var(--warn); }
+.q .id { font-family: var(--font-mono); font-size: .82rem; color: var(--accent); grid-row: span 3; padding-top: 2px; }
+.q .text { font-weight: 600; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.q .why, .q .rec { font-size: .86rem; min-width: 0; }
+.q .why { color: var(--muted); }
+.q .rec b { color: var(--accent); font-weight: 600; }
+
+.steps { counter-reset: s; display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 32px 1fr; gap: 10px; }
+.steps li::before { content: counter(s); font-family: var(--font-mono); width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: .8rem; }
+
+@media (max-width: 640px) {
+  h1 { font-size: 1.6rem; }
+  .scope { grid-template-columns: 1fr; }
+  .q { grid-template-columns: 1fr; }
+  .q .id { grid-row: auto; }
+}
+</style>
+<style>
+.flow.seven { grid-template-columns: repeat(7, minmax(150px, 1fr)); min-width: 1120px; }
+.box.foreign { border: 1px dashed var(--warn); background: var(--warn-soft); }
+.decided { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.decided div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.decided .k { font-family: var(--font-mono); font-size: .78rem; color: var(--accent); }
+.decided b { font-size: .95rem; }
+.decided p { font-size: .86rem; color: var(--muted); }
+.boundary { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: stretch; }
+.zone { border: 2px solid var(--accent); border-radius: 12px; padding: 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.zone.ext { border: 2px dashed var(--warn); }
+.zone h3 { font-size: .8rem; letter-spacing: .07em; text-transform: uppercase; }
+.zone.vn h3 { color: var(--accent); }
+.zone.ext h3 { color: var(--warn); }
+.gate { display: grid; place-items: center; gap: 6px; text-align: center; font-size: .78rem; color: var(--muted); max-width: 150px; }
+.gate .arrow { font-size: 1.4rem; color: var(--warn); font-weight: 700; }
+.chat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; font-size: .86rem; min-width: 0; }
+.msg { display: grid; grid-template-columns: 52px 1fr; gap: 8px; }
+.msg .t { font-family: var(--font-mono); color: var(--muted); font-size: .8rem; }
+.msg .bubble { background: var(--accent-soft); border-radius: 10px; padding: 6px 10px; justify-self: start; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 16px; align-items: start; }
+.warnlist { display: grid; gap: 8px; }
+.warnlist div { background: var(--warn-soft); border-radius: 8px; padding: 8px 12px; font-size: .86rem; }
+.rules3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.rules3 > div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.rules3 h3 { font-size: .92rem; }
+.rules3 ul { margin: 0; padding-left: 18px; font-size: .86rem; display: grid; gap: 4px; }
+.rules3 code { background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+.q.done { opacity: .85; }
+.chip.ok { background: var(--accent-soft); color: var(--accent); }
+.phase td:first-child { white-space: nowrap; }
+@media (max-width: 760px) {
+  .boundary { grid-template-columns: 1fr; }
+  .gate { max-width: none; }
+  .gate .arrow { transform: rotate(90deg); }
+  .two { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Bản thiết kế để chốt yêu cầu · cập nhật 01/10/2026</div>
+  <h1>Kiểm tra hồ sơ thuế hộ kinh doanh — V1</h1>
+  <p class="lead">Công cụ cho kế toán dịch vụ. Hộ kinh doanh gửi ảnh hóa đơn, ảnh chuyển khoản và tin nhắn doanh thu qua Zalo. Hệ thống đọc, gom theo đúng ngày phát sinh, phân loại thu chi, rồi chỉ ra chỗ thiếu hoặc chưa khớp kèm bằng chứng. Kế toán là người xác nhận mọi thứ.</p>
+  <div class="status">
+    <span class="chip ok">4 quyết định đã chốt</span>
+    <span class="chip warn">9 câu hỏi mới về Zalo và AI</span>
+    <span class="chip info">Chưa viết code</span>
+  </div>
+</header>
+
+<section>
+  <div class="eyebrow">Đã chốt</div>
+  <h2>Bốn quyết định định hướng V1</h2>
+  <div class="decided">
+    <div><span class="k">Q12 · Nguồn dữ liệu</span><b>Zalo là cửa vào chính</b><p>Hỗ trợ đủ 3 cách nhưng làm theo thứ tự: Zalo ở V1, upload XML/Excel ở V1.1, tự đồng bộ cổng hóa đơn ở V2 nếu điều kiện kỹ thuật và bảo mật cho phép.</p></div>
+    <div><span class="k">Q17 · AI</span><b>Hybrid</b><p>OCR và phát hiện, ẩn thông tin nhạy cảm chạy trong nước. Chỉ dữ liệu cần thiết, đã ẩn danh, mới được gửi tới AI nước ngoài để phân loại nâng cao.</p></div>
+    <div><span class="k">Q7 · Q9 · Ngành</span><b>Chờ design partner</b><p>Chọn ngành theo tập khách của 2–3 kế toán thử nghiệm. Rule nguồn gốc hàng hóa chỉ làm nếu ngành chính là thương mại.</p></div>
+    <div><span class="k">Q24 · Stack</span><b>Python FastAPI, PostgreSQL, Next.js</b><p>Backend Python để xử lý OCR, parse và AI. Web cho kế toán dùng Next.js.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Phạm vi theo giai đoạn</div>
+  <h2>V1 tập trung vào hộp thư Zalo</h2>
+  <div class="tbl-scroll">
+    <table class="phase">
+      <thead><tr><th>Giai đoạn</th><th>Làm gì</th><th>Điều kiện để chuyển sang giai đoạn sau</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip ok">V1</span></td><td>Zalo OA nhận ảnh và tin nhắn → OCR trong nước → ẩn thông tin nhạy cảm → AI phân loại → gom theo ngày → kế toán xác nhận → rule cơ bản → tin nhắn đòi chứng từ</td><td>2 văn phòng xử lý trọn một kỳ thật; kế toán xác nhận nhanh hơn cách làm hiện tại</td></tr>
+        <tr><td><span class="chip">V1.1</span></td><td>Upload XML/Excel hóa đơn điện tử, sao kê ngân hàng, Excel POS; rule đối chiếu doanh thu với hóa đơn</td><td>Parser cho 3 ngân hàng phổ biến nhất của khách</td></tr>
+        <tr><td><span class="chip">V2</span></td><td>Tự đồng bộ hóa đơn điện tử; rule nguồn gốc hàng hóa và chi phí định kỳ; xuất mẫu sổ</td><td>Thiết kế kho bí mật cho thông tin đăng nhập được duyệt bảo mật</td></tr>
+        <tr><td><span class="chip">Sau</span></td><td>Tính thuế, tờ khai, eTax, tích hợp phần mềm kế toán</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Không bao giờ có: ô nhập số thuế mong muốn, tỷ suất mong muốn hay mức chi phí cần đạt.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Kiến trúc tổng thể</div>
+  <h2>Dữ liệu đi từ Zalo sang kế toán, chỉ phần đã ẩn danh ra nước ngoài</h2>
+  <div class="legend">
+    <span><i class="sw v1"></i>Có trong V1</span>
+    <span><i class="sw later"></i>Giai đoạn sau</span>
+    <span><i class="sw human"></i>Kế toán thao tác</span>
+    <span><i class="sw core"></i>Lõi tạo khác biệt</span>
+    <span><i class="sw" style="border:1px dashed var(--warn);background:var(--warn-soft)"></i>Dịch vụ ở nước ngoài</span>
+  </div>
+  <div class="flow-scroll">
+    <div class="flow seven">
+      <div class="stage">
+        <div class="stage-h">1 · Nguồn</div>
+        <div class="stage-b">
+          <div class="box v1"><b>Hộ nhắn Zalo OA</b><small>ảnh hóa đơn, ảnh chuyển khoản, tin doanh thu, ghi chú</small></div>
+          <div class="box later"><b>Upload XML/Excel</b><small>V1.1</small></div>
+          <div class="box later"><b>Đồng bộ cổng hóa đơn</b><small>V2</small></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-h">2 · Thu nhận</div>
+        <div class="stage-b">
+          <div class="box v1"><b>Webhook Zalo OA</b><small>nhận sự kiện, lưu ngay, xử lý sau</small></div>
+          <div class="box v1"><b>Liên kết người gửi ↔ hộ</b><small>một hộ có nhiều người gửi</small></div>
+          <div class="box v1"><b>Kho file gốc</b><small>bất biến, lưu trong nước, băm để phát hiện trùng</small></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-h">3 · Xử lý trong nước</div>
+        <div class="stage-b">
+          <div class="box core"><b>OCR</b><small>chữ + vị trí trên ảnh</small></div>
+          <div class="box core"><b>Gom tin nhắn</b><small>ảnh + chú thích gửi liền nhau thành một giao dịch</small></div>
+          <div class="box core"><b>Đọc số tiền tiếng Việt</b><small>"12tr5", "950k", "1t2"</small></div>
+          <div class="box core"><b>Phát hiện và ẩn thông tin nhạy cảm</b></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-h">4 · AI nâng cao</div>
+        <div class="stage-b">
+          <div class="box foreign"><b>Phân loại và trích trường</b><small>chỉ nhận văn bản đã ẩn danh, không nhận ảnh gốc</small></div>
+          <div class="box v1"><b>Ghép lại dữ liệu thật</b><small>thay mã giả bằng giá trị gốc, chạy trong nước</small></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-h">5 · Sổ theo ngày</div>
+        <div class="stage-b">
+          <div class="box v1"><b>Xác định ngày phát sinh</b><small>ngày chứng từ, ngày gửi, giờ chốt ngày</small></div>
+          <div class="box v1"><b>Bản ghi thu/chi</b><small>giá trị AI + giá trị xác nhận + độ tin cậy</small></div>
+          <div class="box human"><b>Hàng đợi duyệt</b><small>chỉ những chỗ AI chưa chắc</small></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-h">6 · Đối chiếu & rule</div>
+        <div class="stage-b">
+          <div class="box core"><b>Ghép cặp</b><small>ảnh chuyển khoản ↔ hóa đơn, ảnh ↔ ảnh trùng</small></div>
+          <div class="box core"><b>Rule engine</b><small>có phiên bản, ngày hiệu lực, căn cứ pháp lý</small></div>
+          <div class="box core"><b>Phát hiện + bằng chứng</b><small>không có bằng chứng thì không tạo</small></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="stage-h">7 · Kết quả</div>
+        <div class="stage-b">
+          <div class="box human"><b>Việc cần xử lý</b><small>chấp nhận / bác bỏ + lý do</small></div>
+          <div class="box v1"><b>Đòi chứng từ</b><small>gửi qua OA hoặc copy</small></div>
+          <div class="box v1"><b>Sổ ngày, tổng hợp tháng</b></div>
+          <div class="box v1"><b>Xuất Excel</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cross">
+    <div class="box"><b>Đa văn phòng & phân quyền</b><small>dữ liệu tách theo văn phòng</small></div>
+    <div class="box"><b>Audit log</b><small>ai sửa gì, khi nào, dựa trên gì</small></div>
+    <div class="box"><b>Nhật ký ẩn danh</b><small>ghi lại mọi lần dữ liệu ra nước ngoài</small></div>
+    <div class="box"><b>Đồng ý & dữ liệu cá nhân</b><small>tách đồng ý dùng dịch vụ và đồng ý training</small></div>
+    <div class="box"><b>Kho dữ liệu training</b><small>ẩn danh, chỉ khách đã đồng ý</small></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Ranh giới dữ liệu</div>
+  <h2>Cái gì ở lại trong nước, cái gì được gửi đi</h2>
+  <div class="boundary">
+    <div class="zone vn">
+      <h3>Hạ tầng trong nước</h3>
+      <div class="box">Ảnh và file gốc, không bao giờ rời khỏi đây</div>
+      <div class="box">OCR → văn bản kèm vị trí</div>
+      <div class="box">Phát hiện thông tin nhạy cảm: họ tên cá nhân, số CCCD, số điện thoại, số tài khoản, địa chỉ, MST của cá nhân</div>
+      <div class="box">Thay bằng mã giả: <code>[NGUOI_1]</code>, <code>[TK_1]</code>, <code>[MST_1]</code></div>
+      <div class="box">Bảng tra mã giả ↔ giá trị thật, chỉ lưu ở đây</div>
+      <div class="box">Ghép kết quả AI trở lại giá trị thật</div>
+    </div>
+    <div class="gate">
+      <span class="arrow">⇄</span>
+      <span>Chỉ văn bản đã ẩn danh đi ra. Chỉ nhãn phân loại và tên trường đi về.</span>
+    </div>
+    <div class="zone ext">
+      <h3>AI nước ngoài</h3>
+      <div class="box">Nhận: <code>Hóa đơn bán hàng. Người bán: [NGUOI_1], MST [MST_1]. Thịt heo 15kg, tổng 2.350.000. Ngày 01/10/2026.</code></div>
+      <div class="box">Trả về: loại chứng từ, thu hay chi, nhóm chi phí, ngày, số tiền, độ tin cậy</div>
+      <div class="box">Không lưu dữ liệu, không dùng để huấn luyện (theo điều khoản nhà cung cấp, cần xác minh)</div>
+    </div>
+  </div>
+  <p>Số tiền và tên hàng vẫn được gửi đi vì AI cần chúng để phân loại. Cần tư vấn pháp lý xác nhận rằng văn bản đã ẩn danh như trên không còn là dữ liệu cá nhân (câu Q36). Nếu OCR trong nước đủ tốt, có những chứng từ không cần gửi ra ngoài.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Xử lý tin nhắn Zalo</div>
+  <h2>Một ngày tin nhắn thành sổ thu chi</h2>
+  <div class="two">
+    <div class="chat">
+      <div class="msg"><span class="t">08:30</span><span class="bubble">[Ảnh hóa đơn mua hàng]</span></div>
+      <div class="msg"><span class="t">08:30</span><span class="bubble">2.350.000đ</span></div>
+      <div class="msg"><span class="t">14:20</span><span class="bubble">[Ảnh chuyển khoản 5.000.000đ]</span></div>
+      <div class="msg"><span class="t">14:21</span><span class="bubble">Tiền mua nguyên liệu</span></div>
+      <div class="msg"><span class="t">21:10</span><span class="bubble">Doanh thu hôm nay 12tr5</span></div>
+    </div>
+    <div class="tbl-scroll">
+      <table style="min-width:560px">
+        <thead><tr><th>Ngày</th><th>Loại</th><th>Nội dung</th><th style="text-align:right">Số tiền</th><th>Nguồn</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          <tr><td>01/10</td><td>Chi</td><td>Mua hàng</td><td style="text-align:right">2.350.000</td><td>Ảnh hóa đơn + tin 08:30</td><td>Đã đọc</td></tr>
+          <tr><td>01/10</td><td>Chi</td><td>Mua nguyên liệu</td><td style="text-align:right">5.000.000</td><td>Ảnh chuyển khoản + tin 14:21</td><td>Chưa có hóa đơn</td></tr>
+          <tr><td>01/10</td><td>Thu</td><td>Doanh thu trong ngày</td><td style="text-align:right">12.500.000</td><td>Tin nhắn tự khai</td><td>Chưa đối chiếu</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="warnlist">
+    <div>⚠ Khoản chuyển khoản 5.000.000đ ngày 01/10 chưa có hóa đơn tương ứng. Đề nghị khách gửi hóa đơn của nhà cung cấp.</div>
+    <div>⚠ Doanh thu 12.500.000đ mới có tin nhắn tự khai, chưa có dữ liệu đối chiếu (POS, hóa đơn đầu ra, sao kê).</div>
+  </div>
+  <div class="rules3">
+    <div>
+      <h3>Gom tin nhắn thành giao dịch</h3>
+      <ul>
+        <li>Ảnh và tin chữ cùng người gửi, cách nhau dưới <code>N</code> phút được gom làm một (mặc định 3 phút, chỉnh được)</li>
+        <li>Số tiền gõ tay khớp với số OCR được dùng để tăng độ tin cậy</li>
+        <li>Gom sai thì kế toán tách hoặc gộp lại, thao tác này được lưu làm dữ liệu học</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Đọc số tiền tiếng Việt</h3>
+      <ul>
+        <li><code>12tr5</code> → 12.500.000, <code>8tr4</code> → 8.400.000</li>
+        <li><code>950k</code> → 950.000, <code>1t2</code> → 1.200.000</li>
+        <li><code>2.350.000</code>, <code>2,35tr</code>, <code>2 triệu 350</code></li>
+        <li>Parser tất định chạy trước, AI chỉ xử lý các trường hợp parser không đọc được</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Xác định ngày phát sinh</h3>
+      <ul>
+        <li>Có ngày trên chứng từ thì dùng ngày chứng từ</li>
+        <li>Tin "hôm nay", "hôm qua", "tối qua" được tính từ giờ gửi</li>
+        <li>Tin gửi trước giờ chốt ngày (ví dụ 04:00) được tính vào ngày hôm trước</li>
+        <li>Luôn lưu cả ngày gửi, ngày chứng từ và ngày hạch toán đề xuất</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Luồng xử lý một kỳ</div>
+  <h2>Từ tin nhắn của chủ hộ đến báo cáo cuối tháng</h2>
+  <div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  actor KH as Chủ hộ
+  participant OA as Zalo OA
+  participant APP as Hệ thống (trong nước)
+  participant AI as AI nước ngoài
+  actor KT as Kế toán
+  KH->>OA: Gửi ảnh hóa đơn, ảnh chuyển khoản, tin doanh thu
+  OA->>APP: Webhook
+  APP->>APP: Lưu file gốc, OCR, gom tin, đọc số tiền
+  APP->>APP: Ẩn thông tin nhạy cảm
+  APP->>AI: Văn bản đã ẩn danh
+  AI-->>APP: Loại chứng từ, thu/chi, nhóm, độ tin cậy
+  APP->>APP: Ghép lại giá trị thật, xếp vào sổ theo ngày
+  APP-->>KT: Hàng đợi duyệt (chỉ chỗ chưa chắc)
+  KT->>APP: Xác nhận hoặc sửa
+  APP->>APP: Chạy rule theo kỳ
+  APP-->>KT: Phát hiện kèm bằng chứng
+  KT->>APP: Chấp nhận hoặc bác bỏ, ghi lý do
+  APP->>OA: Tin nhắn đòi chứng từ (kế toán bấm gửi)
+  OA->>KH: Danh sách cần bổ sung
+  KH->>OA: Gửi bổ sung
+  APP-->>KT: Sổ tháng và báo cáo Excel
+</pre>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Mô hình dữ liệu</div>
+  <h2>Các thực thể chính</h2>
+  <p>Tin nhắn được gom thành nhóm giao dịch, mỗi nhóm sinh ra một hoặc nhiều bản ghi thu chi. Mọi bản ghi, dù từ Zalo hay từ file upload sau này, đều dùng chung bảng <code>RECORD</code>, nên rule không cần biết dữ liệu đến từ đâu.</p>
+  <div class="diagram">
+<pre class="mermaid">
+erDiagram
+  OFFICE ||--o{ USER : "có"
+  OFFICE ||--o{ ZALO_OA : "kết nối"
+  OFFICE ||--o{ CUSTOMER : "quản lý"
+  USER }o--o{ CUSTOMER : "được giao"
+  CUSTOMER ||--o{ TAX_PROFILE : "theo thời gian"
+  CUSTOMER ||--o{ SENDER : "người gửi"
+  ZALO_OA ||--o{ SENDER : "nhận tin từ"
+  SENDER ||--o{ MESSAGE : "gửi"
+  MESSAGE }o--o| RAW_FILE : "đính kèm"
+  MESSAGE }o--|| MESSAGE_GROUP : "gom vào"
+  MESSAGE_GROUP ||--o{ RECORD : "sinh ra"
+  RAW_FILE ||--o{ RECORD : "upload sinh ra"
+  CUSTOMER ||--o{ PERIOD : "có"
+  PERIOD ||--o{ RULE_RUN : "chạy"
+  RULE ||--o{ RULE_RUN : "phiên bản"
+  RULE_RUN ||--o{ FINDING : "tạo"
+  FINDING ||--|{ EVIDENCE : "bắt buộc"
+  EVIDENCE }o--|| RECORD : "trỏ tới"
+  FINDING ||--o{ DECISION : "được quyết"
+  RECORD ||--o{ AI_CALL : "đã gửi AI"
+  SENDER {
+    string zalo_user_id
+    string display_name
+    datetime linked_at
+  }
+  MESSAGE {
+    string kind
+    text text
+    datetime sent_at
+  }
+  RECORD {
+    string kind
+    json fields_ai
+    json fields_confirmed
+    float confidence
+    date sent_date
+    date document_date
+    date posting_date
+  }
+  AI_CALL {
+    string provider
+    text redacted_payload
+    json response
+    datetime called_at
+  }
+  RULE {
+    string rule_id
+    string version
+    date effective_from
+    string legal_basis
+  }
+  FINDING {
+    string severity
+    decimal amount
+    string suggested_action
+  }
+</pre>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Rule theo giai đoạn</div>
+  <h2>Rule V1 chạy được chỉ với dữ liệu Zalo</h2>
+  <p>Căn cứ pháp lý của từng rule cần người có chuyên môn thuế xác minh (Q11).</p>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Mã</th><th>Giai đoạn</th><th>Kiểm tra</th><th>Mức</th><th>Ví dụ gợi ý cho kế toán</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">ZL-01</span></td><td>V1</td><td>Ảnh chuyển khoản chi tiền chưa có hóa đơn cùng số tiền trong ±7 ngày</td><td><span class="chip warn">Cần kiểm tra</span></td><td class="ex">01/10 chuyển 5.000.000đ "tiền mua nguyên liệu", chưa có hóa đơn. Đề nghị khách gửi hóa đơn của nhà cung cấp.</td></tr>
+        <tr><td><span class="mono">ZL-02</span></td><td>V1</td><td>Doanh thu chỉ có tin nhắn tự khai, chưa có nguồn đối chiếu</td><td><span class="chip info">Nên xác nhận</span></td><td class="ex">Tháng 10 có 28 ngày doanh thu tự khai, tổng 341.000.000đ, chưa có POS hoặc hóa đơn đầu ra.</td></tr>
+        <tr><td><span class="mono">ZL-03</span></td><td>V1</td><td>Ngày kinh doanh không có tin doanh thu</td><td><span class="chip info">Nên xác nhận</span></td><td class="ex">Chưa có doanh thu ngày 07/10 và 14/10. Hỏi khách có nghỉ bán không.</td></tr>
+        <tr><td><span class="mono">HD-01</span></td><td>V1</td><td>Chứng từ trùng: cùng ảnh, hoặc cùng người bán, số hóa đơn, số tiền</td><td><span class="chip warn">Cần kiểm tra</span></td><td class="ex">Ảnh hóa đơn gas 950.000đ được gửi 2 lần (02/10 và 05/10).</td></tr>
+        <tr><td><span class="mono">HD-02</span></td><td>V1</td><td>Lệch ngày: chứng từ gửi muộn hoặc thuộc kỳ khác</td><td><span class="chip warn">Cần kiểm tra</span></td><td class="ex">Gửi 05/10 nhưng hóa đơn ngày 28/09. Đề xuất hạch toán vào tháng 9.</td></tr>
+        <tr><td><span class="mono">HD-03</span></td><td>V1</td><td>MST người bán sai định dạng hoặc sai số kiểm tra</td><td><span class="chip warn">Cần kiểm tra</span></td><td class="ex">MST đọc được 031234567 thiếu chữ số. Đối chiếu với ảnh gốc.</td></tr>
+        <tr><td><span class="mono">DT-01</span></td><td>V1.1</td><td>Doanh thu POS hoặc tiền vào lớn hơn hóa đơn đầu ra theo ngày</td><td><span class="chip crit">Nghiêm trọng</span></td><td class="ex">12/10: POS 8.400.000đ, hóa đơn đã xuất 6.100.000đ.</td></tr>
+        <tr><td><span class="mono">CP-01</span></td><td>V1.1</td><td>Tiền chi trên sao kê chưa khớp chứng từ nào</td><td><span class="chip info">Nên xác nhận</span></td><td class="ex">16/10 chuyển 12.300.000đ cho [người nhận], chưa có chứng từ.</td></tr>
+        <tr><td><span class="mono">HH-01</span></td><td>V2</td><td>Nguồn gốc hàng hóa: tồn đầu + mua − bán &lt; 0</td><td><span class="chip crit">Nghiêm trọng</span></td><td class="ex">Thiếu nguồn gốc 70 thùng nước ngọt. Có 3 khoản chuyển cho nhà cung cấp chưa có hóa đơn.</td></tr>
+        <tr><td><span class="mono">CP-02</span></td><td>V2</td><td>Chi phí định kỳ thiếu chứng từ</td><td><span class="chip info">Nên xác nhận</span></td><td class="ex">Chuyển 15.000.000đ ngày 5 hàng tháng, có thể là tiền thuê. Đề nghị bổ sung hợp đồng.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Ràng buộc bắt buộc</div>
+  <h2>Những điều hệ thống không bao giờ làm</h2>
+  <ul class="guard">
+    <li><span class="n">G1</span><span>Không tạo phát hiện nào nếu không có ít nhất một bằng chứng gốc. Ràng buộc này nằm trong code.</span></li>
+    <li><span class="n">G2</span><span>Không có ô nhập số thuế mong muốn, tỷ suất mong muốn hay mức chi phí cần đạt.</span></li>
+    <li><span class="n">G3</span><span>Không gợi ý nhà cung cấp mà hộ chưa từng giao dịch, không gợi ý số tiền hóa đơn cần "thêm".</span></li>
+    <li><span class="n">G4</span><span>AI không tạo phát hiện và không tính thuế. Phát hiện chỉ đến từ rule có phiên bản.</span></li>
+    <li><span class="n">G5</span><span>Ảnh gốc và thông tin nhạy cảm chưa ẩn không bao giờ được gửi ra nước ngoài. Mọi lần gửi đều được ghi nhật ký.</span></li>
+    <li><span class="n">G6</span><span>Doanh thu tự khai qua tin nhắn chỉ là số để đối chiếu, không được coi là chứng từ.</span></li>
+    <li><span class="n">G7</span><span>Mọi sửa đổi và quyết định đều có audit log. Dữ liệu chỉ vào tập training khi đã có đồng ý riêng và đã ẩn danh.</span></li>
+  </ul>
+</section>
+
+<section>
+  <div class="eyebrow">Câu hỏi mới</div>
+  <h2>Chín câu hỏi phát sinh từ quyết định Zalo và hybrid AI</h2>
+  <p>Các câu viền cam chặn thiết kế V1. Một số câu cần kiểm tra chính sách Zalo hiện hành trước khi trả lời được.</p>
+
+  <div class="qgroup">
+    <h3>H · Zalo</h3>
+    <div class="q first"><span class="id">Q29</span><div class="text">Zalo OA thuộc về ai: một OA chung của sản phẩm, hay mỗi văn phòng kế toán kết nối OA riêng? <span class="chip warn">Chốt trước</span></div><div class="why">Chủ hộ tin tên của kế toán hơn tên một sản phẩm lạ. OA riêng thì mỗi văn phòng phải tự đăng ký và xác thực OA, việc onboarding nặng hơn.</div><div class="rec"><b>Đề xuất:</b> kiến trúc hỗ trợ nhiều OA ngay từ đầu. Pilot dùng OA của chính design partner.</div></div>
+    <div class="q first"><span class="id">Q30</span><div class="text">Hiện chủ hộ nhắn cho kế toán trong chat 1-1 hay trong nhóm Zalo (kế toán, chủ hộ, nhân viên)? <span class="chip warn">Chốt trước</span></div><div class="why">Nếu phần lớn là nhóm, cần kiểm tra OA có tham gia nhóm và nhận tin trong nhóm qua API được không. Nếu không được, chủ hộ phải đổi thói quen sang nhắn OA. Đây là rủi ro lớn nhất của hướng Zalo.</div><div class="rec"><b>Đề xuất:</b> hỏi trong phỏng vấn, đồng thời làm spike kỹ thuật với Zalo OA API trước khi code (bước 2 bên dưới).</div></div>
+    <div class="q"><span class="id">Q31</span><div class="text">Kế toán có trả lời khách ngay trong app không, hay app chỉ đọc và gửi tin đòi chứng từ?</div><div class="why">Chat hai chiều đầy đủ là một sản phẩm riêng. Tin OA gửi đi cũng có giới hạn về thời gian và loại tin theo chính sách Zalo.</div><div class="rec"><b>Đề xuất:</b> V1 chỉ gửi tin đòi chứng từ và xác nhận đã nhận. Kế toán vẫn chat trên Zalo như cũ.</div></div>
+    <div class="q"><span class="id">Q32</span><div class="text">Liên kết người gửi với hộ bằng cách nào?</div><div class="why">Một hộ có thể có chủ, vợ chồng, nhân viên cùng gửi. Gán sai hộ là lỗi nghiêm trọng.</div><div class="rec"><b>Đề xuất:</b> mỗi hộ có mã hoặc QR liên kết. Người gửi chưa liên kết được đưa vào hàng chờ để kế toán gán.</div></div>
+    <div class="q"><span class="id">Q33</span><div class="text">Giờ chốt ngày là mấy giờ? Tin "doanh thu hôm nay" gửi lúc 1 giờ sáng tính vào ngày nào?</div><div class="why">Quán ăn, quán nhậu thường đóng cửa sau nửa đêm.</div><div class="rec"><b>Đề xuất:</b> cấu hình theo từng hộ, mặc định 04:00.</div></div>
+    <div class="q"><span class="id">Q34</span><div class="text">Khi hộ đã gửi ảnh chuyển khoản, sau này lại upload sao kê có cùng giao dịch, xử lý thế nào?</div><div class="why">Tránh đếm một khoản chi hai lần.</div><div class="rec"><b>Đề xuất:</b> tự ghép theo số tiền, ngày, nội dung; giữ một giao dịch, lưu cả hai bằng chứng.</div></div>
+  </div>
+
+  <div class="qgroup">
+    <h3>I · Hybrid AI</h3>
+    <div class="q first"><span class="id">Q35</span><div class="text">OCR trong nước dùng gì: tự host mô hình mã nguồn mở, hay thuê dịch vụ OCR của công ty Việt Nam? <span class="chip warn">Chốt trước</span></div><div class="why">Ảnh chụp bằng điện thoại, hóa đơn viết tay, ảnh chụp màn hình app ngân hàng có chất lượng rất khác nhau. Tự host thì chủ động nhưng cần GPU và người vận hành.</div><div class="rec"><b>Đề xuất:</b> thử 2–3 phương án trên 200 chứng từ thật của design partner, chọn theo độ chính xác và chi phí.</div></div>
+    <div class="q first"><span class="id">Q36</span><div class="text">Những trường nào bắt buộc phải ẩn trước khi gửi ra nước ngoài? Văn bản đã ẩn danh có còn là dữ liệu cá nhân không? <span class="chip warn">Chốt trước</span></div><div class="why">Quyết định thiết kế bộ ẩn danh và có cần thủ tục chuyển dữ liệu ra nước ngoài hay không.</div><div class="rec"><b>Đề xuất:</b> danh sách ở phần ranh giới dữ liệu là bản nháp. Cần luật sư về dữ liệu cá nhân xác nhận.</div></div>
+    <div class="q"><span class="id">Q37</span><div class="text">Nếu OCR trong nước đã đủ tin cậy, có bỏ qua bước gọi AI nước ngoài không?</div><div class="why">Giảm chi phí và giảm lượng dữ liệu ra nước ngoài.</div><div class="rec"><b>Đề xuất:</b> có. Chỉ gọi AI khi rule trong nước không phân loại được hoặc độ tin cậy thấp.</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Câu hỏi còn mở từ bản trước</div>
+  <h2>Vẫn cần trả lời, chủ yếu qua phỏng vấn</h2>
+  <div class="qgroup">
+    <h3>A · Người dùng & kinh doanh</h3>
+    <div class="q"><span class="id">Q1</span><div class="text">V1 chỉ cho kế toán đăng nhập, chủ hộ chỉ nhắn Zalo?</div><div class="rec"><b>Đề xuất:</b> đúng vậy. Với hướng Zalo, chủ hộ không cần cài app.</div></div>
+    <div class="q"><span class="id">Q2</span><div class="text">Văn phòng có nhiều kế toán, cần giao hộ cho từng người?</div><div class="rec"><b>Đề xuất:</b> tenant là văn phòng, hai vai trò Chủ văn phòng và Kế toán.</div></div>
+    <div class="q"><span class="id">Q3</span><div class="text">Mỗi kế toán bao nhiêu hộ, mỗi hộ bao nhiêu tin nhắn và ảnh một tháng?</div><div class="rec"><b>Đề xuất:</b> lấy số liệu thật, dùng để tính chi phí OCR và AI.</div></div>
+    <div class="q"><span class="id">Q4</span><div class="text">Đã có kế toán đồng ý thử nghiệm chưa?</div><div class="rec"><b>Đề xuất:</b> 2–3 văn phòng, 10–20 hộ. Bây giờ đây là việc quan trọng nhất vì Q7, Q9, Q30, Q35 đều phụ thuộc vào họ.</div></div>
+    <div class="q"><span class="id">Q5</span><div class="text">Mô hình thu phí và mức giá?</div><div class="rec"><b>Đề xuất:</b> thu theo hộ mỗi tháng.</div></div>
+  </div>
+  <div class="qgroup">
+    <h3>B · Nghiệp vụ</h3>
+    <div class="q"><span class="id">Q6</span><div class="text">Tỷ lệ hộ nộp thuế theo % doanh thu và theo thu nhập?</div><div class="rec"><b>Đề xuất:</b> hỏi design partner. Quyết định thứ tự ưu tiên rule ở V1.1.</div></div>
+    <div class="q"><span class="id">Q8</span><div class="text">Kỳ xử lý theo tháng hay quý?</div><div class="rec"><b>Đề xuất:</b> sổ theo ngày, báo cáo theo tháng, cho phép gộp quý.</div></div>
+    <div class="q"><span class="id">Q10</span><div class="text">Báo cáo xuất ra dạng nào?</div><div class="rec"><b>Đề xuất:</b> V1 dùng Excel sổ theo ngày và danh sách phát hiện. Mẫu sổ chuẩn để V2.</div></div>
+    <div class="q"><span class="id">Q11</span><div class="text">Ai xác minh căn cứ pháp lý của từng rule?</div><div class="rec"><b>Đề xuất:</b> một kế toán thuế có chứng chỉ duyệt rule trước khi bật.</div></div>
+    <div class="q"><span class="id">Q16</span><div class="text">Mua hàng không có hóa đơn (chợ, nông dân) có phổ biến không?</div><div class="rec"><b>Đề xuất:</b> hỏi trong phỏng vấn. Với hướng Zalo, đây có thể là phần lớn ảnh khách gửi.</div></div>
+  </div>
+  <div class="qgroup">
+    <h3>D · E · F · G · AI, pháp lý, kỹ thuật, đo lường</h3>
+    <div class="q"><span class="id">Q18</span><div class="text">Kế toán duyệt mọi bản ghi hay chỉ bản ghi độ tin cậy thấp?</div><div class="rec"><b>Đề xuất:</b> chỉ bản ghi độ tin cậy thấp, ngưỡng chỉnh theo dữ liệu thật.</div></div>
+    <div class="q"><span class="id">Q19</span><div class="text">Chi phí OCR và AI tối đa mỗi hộ mỗi tháng?</div><div class="rec"><b>Đề xuất:</b> đặt trần theo giá bán ở Q5.</div></div>
+    <div class="q"><span class="id">Q20</span><div class="text">Đồng ý training lấy ở cấp văn phòng hay từng hộ?</div><div class="rec"><b>Đề xuất:</b> văn phòng ký điều khoản, từng hộ có quyền từ chối. Mặc định không dùng.</div></div>
+    <div class="q"><span class="id">Q21</span><div class="text">Dữ liệu có bắt buộc lưu tại Việt Nam?</div><div class="rec"><b>Đề xuất:</b> với hướng hybrid đã chốt, lưu file gốc và chạy OCR trên hạ tầng trong nước.</div></div>
+    <div class="q"><span class="id">Q22</span><div class="text">Lưu chứng từ bao lâu, ai chịu trách nhiệm lưu theo luật?</div><div class="rec"><b>Đề xuất:</b> hệ thống là công cụ hỗ trợ, cho phép xuất toàn bộ dữ liệu khi kết thúc hợp đồng.</div></div>
+    <div class="q"><span class="id">Q23</span><div class="text">Pháp nhân vận hành và điều khoản giới hạn trách nhiệm?</div><div class="rec"><b>Đề xuất:</b> soạn trước khi có khách trả tiền.</div></div>
+    <div class="q"><span class="id">Q25</span><div class="text">V1 chỉ cần web trên máy tính?</div><div class="rec"><b>Đề xuất:</b> đúng vậy. Chủ hộ dùng Zalo, kế toán dùng web.</div></div>
+    <div class="q"><span class="id">Q26</span><div class="text">Hạ tầng cloud nào?</div><div class="rec"><b>Đề xuất:</b> cloud trong nước cho lưu trữ và OCR theo quyết định hybrid. Đóng gói bằng container để dễ chuyển.</div></div>
+    <div class="q"><span class="id">Q27</span><div class="text">Mốc thời gian MVP?</div><div class="rec"><b>Đề xuất:</b> xong khi 2 văn phòng xử lý trọn một kỳ thật qua Zalo.</div></div>
+    <div class="q"><span class="id">Q28</span><div class="text">Chỉ số thành công?</div><div class="rec"><b>Đề xuất:</b> số phút kế toán xử lý một hộ một ngày, tỷ lệ bản ghi không cần sửa, tỷ lệ phát hiện được chấp nhận.</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Bước tiếp theo</div>
+  <h2>Thứ tự làm việc đề xuất</h2>
+  <ol class="steps">
+    <li><span>Tìm 2–3 kế toán làm design partner. Phỏng vấn để trả lời Q3, Q6, Q7, Q16, Q30 và xin bộ chứng từ mẫu đã được đồng ý.</span></li>
+    <li><span>Spike kỹ thuật Zalo OA (khoảng 1 tuần): đăng ký OA thử, kiểm tra nhận ảnh qua webhook, nhận tin trong nhóm, giới hạn gửi tin, chi phí và điều kiện xác thực. Kết quả trả lời Q29, Q30, Q31.</span></li>
+    <li><span>Spike OCR trong nước: thử 2–3 phương án trên 200 chứng từ thật (Q35). Song song hỏi luật sư về Q36.</span></li>
+    <li><span>Viết đặc tả chi tiết cho pipeline Zalo (gom tin, đọc số tiền, xác định ngày) và 6 rule V1, có ví dụ đầu vào và đầu ra.</span></li>
+    <li><span>Viết code lõi kèm test: mô hình dữ liệu, parser số tiền, gom tin nhắn, rule engine. Phần này làm được ngay mà không cần chờ Zalo và OCR.</span></li>
+    <li><span>Nối webhook Zalo, OCR, bộ ẩn danh và AI. Làm giao diện: danh sách hộ, hộp thư Zalo, sổ theo ngày, hàng đợi duyệt, việc cần xử lý.</span></li>
+  </ol>
+</section>
+
+</div>
