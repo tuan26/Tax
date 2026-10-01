@@ -11,7 +11,7 @@
   },
   "conventions": {
     "decisions": "Mỗi quyết định có value và danh sách band được chấp nhận. value = null nghĩa là hệ thống không được tự chọn; candidates liệt kê các giá trị cần đưa cho kế toán.",
-    "review_required": "true khi message_group, transaction_type, amount hoặc posting_date không đạt HIGH hay có value null, hoặc khi bản ghi là đính chính. document_date = null không bắt buộc duyệt vì nhiều chứng từ và số tự khai vốn không có ngày. null ở trường này nghĩa là ca không kiểm tra cờ đó.",
+    "review_required": "true khi message_group, transaction_type, amount hoặc posting_date không đạt HIGH hay có value null, hoặc khi có lý do bắt buộc duyệt: correction (đính chính), caption_ambiguous, client_retraction (khách rút lại), maybe_other_customer (khách báo của hộ khác). document_date = null không bắt buộc duyệt vì nhiều chứng từ và số tự khai vốn không có ngày. null ở trường này nghĩa là ca không kiểm tra cờ đó.",
     "sent_date": "Ngày gửi theo giờ địa phương, tất định, không có confidence. null với tin nhập tay không có giờ gửi.",
     "posting_date": "Ngày hạch toán đề xuất, đã áp giờ chốt ngày kinh doanh.",
     "evidence_kind": "document | bank_transfer_screenshot | self_declared. self_declared là số tự khai, không phải chứng từ (nguyên tắc G6).",
@@ -1525,6 +1525,213 @@
           },
           "sent_date": "2026-10-01",
           "review_required": false
+        }
+      ]
+    },
+    {
+      "case_id": "G21",
+      "title": "Khách báo gửi nhầm ảnh",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1",
+            "m2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 950000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": true,
+          "review_reasons": [
+            "client_retraction"
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "G22",
+      "title": "Khách báo hóa đơn của quán khác",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1",
+            "m2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 1500000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": true,
+          "review_reasons": [
+            "maybe_other_customer"
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "G23",
+      "title": "'Không lấy cái này' sau hai ảnh",
+      "record_count": 2,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 320000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": true,
+          "review_reasons": [
+            "client_retraction"
+          ]
+        },
+        {
+          "record_key": "R2",
+          "from_groups": [
+            "G2"
+          ],
+          "evidence_items": [
+            "m2#a2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 640000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": true,
+          "review_reasons": [
+            "client_retraction"
+          ]
         }
       ]
     },

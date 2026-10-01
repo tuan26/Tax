@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { parseAmount } from "@/lib/amount.mjs";
-import { day, money, REASONS } from "@/lib/format";
+import { day, EXCLUDE_REASONS, money, REASONS } from "@/lib/format";
 import type { LedgerRecord, RecordFields } from "@/lib/types";
 
 function band(conf: number | null | undefined, value: unknown) {
@@ -36,6 +36,9 @@ export function RecordForm({ record, onDone, autoFocus }: { record: LedgerRecord
   const [desc, setDesc] = useState(f.description ?? "");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [excluding, setExcluding] = useState(false);
+  const [excludeReason, setExcludeReason] = useState(
+    record.review_reasons.includes("maybe_other_customer") ? "other_customer" : "client_retraction");
   const amountRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -77,6 +80,19 @@ export function RecordForm({ record, onDone, autoFocus }: { record: LedgerRecord
         method: confirm ? "POST" : "PATCH",
         json: { fields: payload() },
       });
+      onDone();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Lỗi không xác định");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const exclude = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/groups/${record.group_id}/exclude`, { method: "POST", json: { reason: excludeReason } });
       onDone();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Lỗi không xác định");
@@ -167,7 +183,35 @@ export function RecordForm({ record, onDone, autoFocus }: { record: LedgerRecord
         <button className="btn" type="button" disabled={busy} onClick={() => submit(false)}>
           Lưu, chưa xác nhận
         </button>
+        <span className="spacer" />
+        {!excluding && (
+          <button className="btn" type="button" disabled={busy} onClick={() => setExcluding(true)}>
+            Loại khỏi sổ
+          </button>
+        )}
       </div>
+      {excluding && (
+        <div className="row card" style={{ padding: 10, background: "var(--crit-soft)" }}>
+          <select id={`exclude-${record.id}`} value={excludeReason} onChange={(e) => setExcludeReason(e.target.value)}
+            style={{ width: "auto", flex: 1 }} aria-label="Lý do loại">
+            {Object.entries(EXCLUDE_REASONS).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+          <button className="btn primary" type="button" disabled={busy} onClick={exclude}
+            style={{ background: "var(--crit)", borderColor: "var(--crit)" }}>
+            Xác nhận loại
+          </button>
+          <button className="btn" type="button" onClick={() => setExcluding(false)}>
+            Thôi
+          </button>
+          <span className="small" style={{ width: "100%" }}>
+            Giao dịch không bị xóa: vẫn lưu trong lịch sử với lý do loại, chỉ không còn tính vào sổ.
+          </span>
+        </div>
+      )}
     </form>
   );
 }

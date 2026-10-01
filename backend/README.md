@@ -57,6 +57,23 @@ trên bảng nghiệp vụ, Row Level Security theo tenant với `FORCE`, khóa 
 
 Bảng vận hành không có audit: `user_session`, `processing_job`, `activity_log`.
 
+## Chỉ số pilot
+
+```bash
+ADMIN_DATABASE_URL=... python -m app.metrics [customer_id]
+```
+
+Tách theo `source_type` (ZALO_API, ZALO_MANUAL, ...). Đọc STOR cùng silent_restructure_rate:
+
+| Chỉ số | Ý nghĩa |
+|---|---|
+| `STOR` | Giao dịch trong sổ mà engine tự tổ chức đúng, kế toán không phải gán, tách, gộp hay chọn ứng viên |
+| `silent_restructure_rate` | Quyết định CONFIDENT của engine bị kế toán thay. Chỉ số an toàn: engine đoán bừa thì STOR tăng nhưng chỉ số này tăng theo |
+| `review_rate` | Quyết định engine đưa vào hàng chờ |
+| `ai_wrong_field_rate` | Bản ghi đã xác nhận có loại, số tiền hoặc ngày AI đưa ra khác số kế toán chốt (không tính trường AI để trống) |
+| `excluded:<lý do>` | Giao dịch kế toán loại khỏi sổ, theo lý do |
+| `active_minutes_by_customer` | Số phút có thao tác trên từng hộ (từ nhịp hoạt động của giao diện) |
+
 ## Cấu trúc
 
 - `app/domain/`: đọc số tiền, ngày, gom tin, chuẩn hóa bản ghi, bộ chấm điểm.

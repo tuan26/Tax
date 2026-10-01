@@ -193,6 +193,11 @@ class _Normalizer:
         elif posting.value is None and posting.candidates:
             reasons.append("posting_date_ambiguous")
 
+        if self._links_to(g, "retraction") or self._links_to(g, "retraction", AMBIGUOUS):
+            reasons.append("client_retraction")
+        if self._links_to(g, "other_customer") or self._links_to(g, "other_customer", AMBIGUOUS):
+            reasons.append("maybe_other_customer")
+
         captions = self._links_to(g, "caption")
         if self._links_to(g, "caption", AMBIGUOUS):
             reasons.append("caption_ambiguous")
@@ -245,7 +250,8 @@ class _Normalizer:
             decisions[k].value is None and k != "message_group" or (decisions[k].confidence or 0) < HIGH
             for k in ("message_group", "transaction_type", "amount", "posting_date")
         )
-        review = weak or "correction" in reasons or "caption_ambiguous" in reasons
+        review = weak or bool(set(reasons) & {"correction", "caption_ambiguous", "client_retraction",
+                                              "maybe_other_customer"})
         return Record(key, g.key, evidence, kind, decisions, sent_date, review, sorted(set(reasons)), description)
 
     def run(self) -> list[Record]:

@@ -26,6 +26,8 @@ export const REASONS: Record<string, string> = {
   ocr_failed: "Không đọc được ảnh",
   ocr_empty: "Ảnh không có chữ đọc được",
   new_evidence_after_confirm: "Có bằng chứng mới sau khi đã xác nhận",
+  client_retraction: "Khách báo gửi nhầm hoặc không lấy",
+  maybe_other_customer: "Khách báo chứng từ của hộ khác",
 };
 
 export const ROLES: Record<string, string> = {
@@ -35,6 +37,8 @@ export const ROLES: Record<string, string> = {
   date_correction: "Sửa ngày",
   correction: "Đính chính",
   duplicate_of: "Có thể trùng",
+  retraction: "Khách rút lại chứng từ",
+  other_customer: "Khách báo của hộ khác",
 };
 
 export const UNMATCHED: Record<string, string> = {
@@ -44,6 +48,13 @@ export const UNMATCHED: Record<string, string> = {
   conflicts_with_existing_group: "Xung đột với nhóm đã xác nhận",
   candidates_unavailable: "Không còn ứng viên",
   non_document: "Có thể không phải chứng từ",
+};
+
+export const EXCLUDE_REASONS: Record<string, string> = {
+  client_retraction: "Khách gửi nhầm / không lấy",
+  other_customer: "Chứng từ của hộ khác",
+  not_business: "Không phải thu chi kinh doanh",
+  duplicate: "Trùng với giao dịch khác",
 };
 
 export const KIND: Record<string, string> = {

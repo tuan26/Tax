@@ -55,6 +55,10 @@ class MergeIn(BaseModel):
     group_ids: list[UUID]
 
 
+class ExcludeIn(BaseModel):
+    reason: str
+
+
 class RecordFieldsIn(BaseModel):
     fields: dict = Field(default_factory=dict)
 
@@ -272,6 +276,11 @@ def create_app(settings, db, storage, ocr) -> FastAPI:
     @app.post("/groups/{group_id}/split")
     def split(group_id: UUID, body: SplitIn, c: Auth):
         return {"group_id": review_call(c, review.split_group, group_id, body.item_refs, c.user_id)}
+
+    @app.post("/groups/{group_id}/exclude")
+    def exclude(group_id: UUID, body: ExcludeIn, c: Auth):
+        review_call(c, review.exclude_group, group_id, body.reason, c.user_id)
+        return {"ok": True}
 
     @app.post("/groups/merge")
     def merge(body: MergeIn, c: Auth):

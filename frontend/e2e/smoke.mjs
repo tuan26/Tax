@@ -30,7 +30,7 @@ await page.click("a:has-text('Nhập dữ liệu')");
 await page.waitForSelector("#chat-text");
 await page.fill("#business-date", "2026-10-03");
 await page.setInputFiles("#file-input", [join(here, "hd_tanphat.jpg"), join(here, "hd_kimlong.jpg"), join(here, "phieu_mo.jpg")]);
-await page.fill("#chat-text", "2tr5\ntiền thịt\nDoanh thu hôm nay 12tr5\nok em nhé");
+await page.fill("#chat-text", "2tr5\ntiền thịt\nDoanh thu hôm nay 12tr5\nok em nhé\nphiếu gas gửi nhầm nhé");
 await shot("02-import-filled");
 await page.click("button:has-text('Lưu đợt nhập')");
 await page.waitForSelector("text=Đã lưu", { timeout: 60000 });
@@ -48,6 +48,10 @@ for (let step = 1; step <= 12; step++) {
     const first = await page.locator("button.choice").first().innerText();
     log.push(`${heading} | chọn 1: ${first.replace(/\s+/g, " ").slice(0, 90)}`);
     await page.keyboard.press("1");
+  } else if (await page.locator("text=Khách báo gửi nhầm").count()) {
+    log.push(`${heading} | loại khỏi sổ vì khách báo gửi nhầm`);
+    await page.click("button:has-text('Loại khỏi sổ')");
+    await page.click("button:has-text('Xác nhận loại')");
   } else {
     const amount = page.locator("input[id^=amount-]");
     if (!(await amount.inputValue())) await amount.fill("950k");

@@ -204,6 +204,34 @@ def merge_groups(conn, group_ids: list, user_id):
     renormalize(conn, tenant, customer)
 
 
+EXCLUDE_REASONS = {
+    "client_retraction": "Khách báo gửi nhầm hoặc không lấy",
+    "other_customer": "Chứng từ của hộ khác",
+    "not_business": "Không phải chi phí/doanh thu kinh doanh",
+    "duplicate": "Trùng với giao dịch khác",
+}
+
+
+def exclude_group(conn, group_id, reason: str, user_id):
+    """Loại giao dịch khỏi sổ. Không xóa gì: nhóm hết hiệu lực, item gốc thành unmatched có lý do,
+    bản ghi giữ lại với trạng thái EXCLUDED."""
+    if reason not in EXCLUDE_REASONS:
+        raise ReviewError("Lý do loại không hợp lệ")
+    g = _active_group(conn, group_id)
+    tenant, customer = g["tenant_id"], g["customer_id"]
+    items = conn.execute(
+        "SELECT * FROM item_decision WHERE customer_id = %s AND superseded_at IS NULL AND"
+        " (group_id = %s OR %s = ANY(target_group_ids))", (customer, group_id, group_id)).fetchall()
+    for d in items:
+        _supersede_decision(conn, d["id"])
+        insert_decision(conn, tenant, customer, d["item_ref"], "unmatched", UNMATCHED, reason=f"excluded:{reason}",
+                        decided_by="user", user_id=user_id)
+    conn.execute("UPDATE message_group SET superseded_at = now() WHERE id = %s", (group_id,))
+    conn.execute("UPDATE record SET status = 'EXCLUDED', excluded_reason = %s, review_required = false,"
+                 " updated_at = now() WHERE group_id = %s", (reason, group_id))
+    renormalize(conn, tenant, customer)
+
+
 # --------------------------------------------------------------------------- bản ghi
 
 

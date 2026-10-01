@@ -38,6 +38,12 @@ UNSUPPORTED_KINDS = {"voice", "unsupported"}
 CAPTION_CUES = ("tien", "hd", "hoa don", "phieu", "bill", "mua", "phi")
 REFERENCE_PHRASES = ("cai tren", "anh tren", "o tren", "cai nay", "hd tren", "cai truoc", "anh truoc")
 CORRECTION_PHRASES = ("sua lai", "chu khong phai", "nham", "ghi nham")
+# Khách rút lại chứng từ hoặc báo nhầm hộ. Không bao giờ được coi là tin rác hay chú thích:
+# giao dịch liên quan luôn phải vào hàng chờ để kế toán quyết định.
+RETRACTION_PHRASES = ("gui nham", "nham anh", "nham hd", "khong lay", "bo cai", "bo anh", "khong tinh", "huy cai",
+                      "huy hd", "xoa giup", "bo qua cai", "nham roi", "nham nhe")
+OTHER_CUSTOMER_PHRASES = ("ben kia", "quan khac", "ho khac", "cua hang khac", "khong phai cua", "cua quan ben",
+                          "nham quan", "nham ho")
 SMALL_TALK = ("nhe", "nha", "ok", "oke", "cam on", "vang", "mai", "lay hang", "alo", "da", "em oi", "chi oi")
 
 # Động từ trên chữ thường còn dấu, để "chi" (khoản chi) không nhầm với "chị".
@@ -329,6 +335,11 @@ class _Engine:
         raw = it.message.get("text") or ""
         folded = fold(raw)
         amounts = find_amounts(raw)
+
+        if contains_any(folded, OTHER_CUSTOMER_PHRASES):
+            return self._annotation(it, "other_customer", folded, data={"text": raw})
+        if not amounts and (contains_any(folded, RETRACTION_PHRASES) or contains_any(folded, ("nham",))):
+            return self._annotation(it, "retraction", folded, data={"text": raw})
 
         if amounts and contains_any(folded, CORRECTION_PHRASES):
             return self._correction(it, raw, amounts)
