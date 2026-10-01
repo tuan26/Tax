@@ -1720,6 +1720,101 @@
           "review_required": false
         }
       ]
+    },
+    {
+      "case_id": "M03",
+      "title": "Nhập tay: OCR đọc tổng ở mức gợi ý, số gõ tay khớp duy nhất một ảnh",
+      "record_count": 2,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "MEDIUM"
+              ]
+            },
+            "amount": {
+              "value": 2350000,
+              "confidence": [
+                "MEDIUM"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-03",
+              "confidence": [
+                "MEDIUM"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-03",
+              "confidence": [
+                "MEDIUM"
+              ]
+            }
+          },
+          "sent_date": null,
+          "review_required": true
+        },
+        {
+          "record_key": "R2",
+          "from_groups": [
+            "G2"
+          ],
+          "evidence_items": [
+            "m2#a2",
+            "m3"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "MEDIUM"
+              ]
+            },
+            "amount": {
+              "value": 2500000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-03",
+              "confidence": [
+                "MEDIUM"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-03",
+              "confidence": [
+                "MEDIUM"
+              ]
+            }
+          },
+          "sent_date": null,
+          "review_required": true,
+          "description_contains": "kim long"
+        }
+      ]
     }
   ]
 }

@@ -134,6 +134,11 @@ def create_app(settings, db, storage, ocr) -> FastAPI:
                      AND r.review_required) AS pending_records
                 FROM customer c ORDER BY c.name""").fetchall()
 
+    @app.get("/customers/{customer_id}")
+    def get_customer(customer_id: UUID, c: Auth):
+        with tx(c) as conn:
+            return _customer(conn, customer_id)
+
     @app.post("/customers", status_code=201)
     def create_customer(body: CustomerIn, c: Auth):
         with tx(c) as conn:
@@ -281,13 +286,14 @@ def create_app(settings, db, storage, ocr) -> FastAPI:
             _customer(conn, customer_id)
             rows = conn.execute("SELECT * FROM record WHERE customer_id = %s AND status = 'ACTIVE' ORDER BY created_at",
                                 (customer_id,)).fetchall()
+            ev = evidence_index(conn, customer_id)
         out = []
         for r in rows:
             eff = review.effective_fields(r)
             posting = eff.get("posting_date")
             if posting and ((date_from and posting < date_from.isoformat()) or (date_to and posting > date_to.isoformat())):
                 continue
-            out.append(record_view(r))
+            out.append(record_view(r, ev))
         return out
 
     @app.patch("/records/{record_id}")
@@ -309,19 +315,38 @@ def create_app(settings, db, storage, ocr) -> FastAPI:
     return app
 
 
-def record_view(r) -> dict:
+def evidence_index(conn, customer_id) -> dict:
+    """item_ref → mô tả bằng chứng gốc để giao diện hiển thị ảnh và tin nhắn."""
+    out = {}
+    for m in conn.execute("SELECT id, kind, text, sent_at, business_date, source_type FROM message"
+                          " WHERE customer_id = %s", (customer_id,)).fetchall():
+        out[str(m["id"])] = {"ref": str(m["id"]), "kind": "text", "text": m["text"], "sent_at": m["sent_at"],
+                             "business_date": m["business_date"], "source_type": m["source_type"]}
+    for a in conn.execute("SELECT a.id, a.message_id, a.mime_type, a.file_name, m.text, m.sent_at, m.business_date,"
+                          " m.source_type FROM attachment a JOIN message m ON m.id = a.message_id"
+                          " WHERE m.customer_id = %s", (customer_id,)).fetchall():
+        ref = f"{a['message_id']}#{a['id']}"
+        out[ref] = {"ref": ref, "kind": "attachment", "attachment_id": a["id"], "mime_type": a["mime_type"],
+                    "file_name": a["file_name"], "text": a["text"], "sent_at": a["sent_at"],
+                    "business_date": a["business_date"], "source_type": a["source_type"]}
+    return out
+
+
+def record_view(r, evidence: dict | None = None) -> dict:
     return {
         "id": r["id"], "group_id": r["group_id"], "fields": review.effective_fields(r), "fields_ai": r["fields_ai"],
         "decision_confidence": r["decision_confidence"], "confirmed": r["confirmed_at"] is not None,
         "review_required": r["review_required"], "review_reasons": r["review_reasons"],
         "evidence_items": r["evidence_items"], "evidence_kind": r["evidence_kind"], "sent_date": r["sent_date"],
         "status": r["status"], "supersedes_id": r["supersedes_id"],
+        "evidence": [evidence[e] for e in r["evidence_items"] if e in evidence] if evidence is not None else None,
     }
 
 
 def build_review_queue(conn, customer_id) -> dict:
     decisions = conn.execute(
-        "SELECT d.*, m.text, m.kind AS message_kind, m.sent_at, m.business_date, m.source_type FROM item_decision d"
+        "SELECT d.*, m.text, m.kind AS message_kind, m.sent_at, m.business_date, m.source_type,"
+        " (SELECT mime_type FROM attachment a WHERE a.id = d.attachment_id) AS mime_type FROM item_decision d"
         " JOIN message m ON m.id = d.message_id WHERE d.customer_id = %s AND d.superseded_at IS NULL"
         " AND (d.status = 'AMBIGUOUS' OR (d.decision = 'unmatched' AND d.needs_review))"
         " ORDER BY m.sent_at NULLS LAST, m.business_date, m.sequence", (customer_id,)).fetchall()
@@ -331,7 +356,8 @@ def build_review_queue(conn, customer_id) -> dict:
     records = conn.execute(
         "SELECT * FROM record WHERE customer_id = %s AND status = 'ACTIVE' AND review_required ORDER BY created_at",
         (customer_id,)).fetchall()
-    group_records = {str(r["group_id"]): record_view(r) for r in conn.execute(
+    ev = evidence_index(conn, customer_id)
+    group_records = {str(r["group_id"]): record_view(r, ev) for r in conn.execute(
         "SELECT * FROM record WHERE customer_id = %s AND status = 'ACTIVE'", (customer_id,)).fetchall()}
     items = []
     for d in decisions:
@@ -339,7 +365,8 @@ def build_review_queue(conn, customer_id) -> dict:
             "type": "ambiguous_link" if d["decision"] == "link" else (
                 "ambiguous_anchor" if d["decision"] == "anchor" else "unmatched"),
             "decision_id": d["id"], "item_ref": d["item_ref"], "role": d["role"], "reason": d["reason"],
-            "text": d["text"], "attachment_id": d["attachment_id"], "sent_at": d["sent_at"],
+            "text": d["text"], "attachment_id": d["attachment_id"], "mime_type": d["mime_type"],
+            "sent_at": d["sent_at"],
             "business_date": d["business_date"], "source_type": d["source_type"],
             "candidates": [{"choice": cand, "records": [group_records.get(p) for p in cand.split("+")]
                             if cand != "NONE" else []} for cand in (d["candidates"] or [])],
@@ -348,7 +375,7 @@ def build_review_queue(conn, customer_id) -> dict:
         "items": [i for i in items if i["type"] != "ambiguous_anchor"],
         "groups": [{"group_id": g["id"], "partition_candidates": g["partition_candidates"],
                     "record": group_records.get(str(g["id"]))} for g in groups],
-        "records": [record_view(r) for r in records],
+        "records": [record_view(r, ev) for r in records],
     }
 
 

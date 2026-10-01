@@ -415,8 +415,10 @@ class _Engine:
 
         matched: list[Group] = []
         if role == "amount_annotation":
+            # Số kế toán/khách gõ và số OCR đọc là hai nguồn độc lập: khớp đúng một ứng viên đã là bằng
+            # chứng mạnh, nên chỉ cần OCR đạt mức gợi ý (0,6) thay vì mức chắc chắn.
             values = set(data["amounts"])
-            matched = [g for g in cands if self._group_total(g) in values]
+            matched = [g for g in cands if self._group_total(g, min_conf=0.6) in values]
         elif role == "caption":
             toks = content_tokens(data["text"])
             matched = [g for g in cands if toks & self._group_tokens(g)]

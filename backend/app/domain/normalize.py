@@ -197,7 +197,8 @@ class _Normalizer:
         if self._links_to(g, "caption", AMBIGUOUS):
             reasons.append("caption_ambiguous")
         description = captions[0].data.get("text") if captions else next(
-            (it.ext("description") for it in docs if it.ext("description")), None)
+            (it.ext("description") for it in docs if it.ext("description")),
+            next((it.ext("counterparty_name", 0.6) for it in docs if it.ext("counterparty_name", 0.6)), None))
 
         evidence = list(g.anchor_items)
         for l in sorted((l for l in self.result.links if l.status == CONFIDENT and l.role != "correction"

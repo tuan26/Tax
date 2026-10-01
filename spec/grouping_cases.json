@@ -3629,6 +3629,213 @@
         "must_not_auto_link": [],
         "requires_human_review": true
       }
+    },
+    {
+      "case_id": "M03",
+      "title": "Nhập tay: OCR đọc tổng ở mức gợi ý, số gõ tay khớp duy nhất một ảnh",
+      "tags": [
+        "manual_import",
+        "evidence_resolves",
+        "from_pilot_run"
+      ],
+      "description": "Gặp khi chạy thử giao diện: OCR đọc dòng 'Tổng cộng' với độ tin cậy 0,85. Số gõ tay và số OCR là hai nguồn độc lập, khớp đúng một ảnh là đủ bằng chứng để tự gán. Bản ghi vẫn dùng số khớp làm giá trị chắc chắn.",
+      "input": {
+        "schema_version": "1.1",
+        "dataset_id": "spec-M03",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-BATCH-M03",
+            "sender_id": null,
+            "sent_at": null,
+            "kind": "image",
+            "source_type": "ZALO_MANUAL",
+            "batch_id": "B-M03",
+            "business_date": "2026-10-03",
+            "sequence": 0,
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-04T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "43a75c4f058a6d48a802c5a3aef515060c2e0fefdd7cd9f9d9ee6f5722110db2",
+                "storage_uri": "fixture://M03/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-BATCH-M03",
+            "sender_id": null,
+            "sent_at": null,
+            "kind": "image",
+            "source_type": "ZALO_MANUAL",
+            "batch_id": "B-M03",
+            "business_date": "2026-10-03",
+            "sequence": 1,
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-04T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a2",
+                "kind": "image",
+                "file_name": "a2.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "e012baee1578369fb780c4409d760046b6f46ccb7579fefdc43a3a0c730a6349",
+                "storage_uri": "fixture://M03/a2.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m3",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-BATCH-M03",
+            "sender_id": null,
+            "sent_at": null,
+            "kind": "text",
+            "source_type": "ZALO_MANUAL",
+            "batch_id": "B-M03",
+            "business_date": "2026-10-03",
+            "sequence": 2,
+            "text": "2tr5",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-04T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.85
+            },
+            "total_amount": {
+              "value": 2350000,
+              "confidence": 0.85
+            },
+            "document_date": {
+              "value": "2026-10-03",
+              "confidence": 0.85
+            },
+            "counterparty_name": {
+              "value": "CỬA HÀNG TÂN PHÁT",
+              "confidence": 0.6
+            }
+          },
+          {
+            "extraction_id": "X-a2",
+            "attachment_id": "a2",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.85
+            },
+            "total_amount": {
+              "value": 2500000,
+              "confidence": 0.85
+            },
+            "document_date": {
+              "value": "2026-10-03",
+              "confidence": 0.85
+            },
+            "counterparty_name": {
+              "value": "CỬA HÀNG KIM LONG",
+              "confidence": 0.6
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          },
+          {
+            "group_key": "G2",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m2#a2"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m3",
+            "role": "amount_annotation",
+            "status": "CONFIDENT",
+            "targets": [
+              "G2"
+            ],
+            "note": "khớp số OCR 2.500.000"
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [
+          {
+            "a": "m3",
+            "b": "G1",
+            "reason": "số tiền không khớp"
+          }
+        ],
+        "requires_human_review": true
+      }
     }
   ]
 }

@@ -5,3 +5,5 @@ __pycache__/
 /backend/var/
 node_modules/
 .next/
+*.tsbuildinfo
+frontend/e2e/shots/
