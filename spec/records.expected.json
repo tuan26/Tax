@@ -12,7 +12,7 @@
   "conventions": {
     "decisions": "Mỗi quyết định có value và danh sách band được chấp nhận. value = null nghĩa là hệ thống không được tự chọn; candidates liệt kê các giá trị cần đưa cho kế toán.",
     "review_required": "true khi message_group, transaction_type, amount hoặc posting_date không đạt HIGH hay có value null, hoặc khi bản ghi là đính chính. document_date = null không bắt buộc duyệt vì nhiều chứng từ và số tự khai vốn không có ngày. null ở trường này nghĩa là ca không kiểm tra cờ đó.",
-    "sent_date": "Ngày gửi theo giờ địa phương, tất định, không có confidence.",
+    "sent_date": "Ngày gửi theo giờ địa phương, tất định, không có confidence. null với tin nhập tay không có giờ gửi.",
     "posting_date": "Ngày hạch toán đề xuất, đã áp giờ chốt ngày kinh doanh.",
     "evidence_kind": "document | bank_transfer_screenshot | self_declared. self_declared là số tự khai, không phải chứng từ (nguyên tắc G6).",
     "record_count": "Số nguyên, hoặc {min, max} khi cách chia nhóm là AMBIGUOUS.",
@@ -1524,6 +1524,199 @@
             }
           },
           "sent_date": "2026-10-01",
+          "review_required": false
+        }
+      ]
+    },
+    {
+      "case_id": "M01",
+      "title": "Nhập tay: số tiền và chú thích khớp duy nhất một ảnh",
+      "record_count": 2,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 2350000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-03",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-03",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": null,
+          "review_required": false
+        },
+        {
+          "record_key": "R2",
+          "from_groups": [
+            "G2"
+          ],
+          "evidence_items": [
+            "m2#a2",
+            "m3",
+            "m4"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 2500000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-03",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-03",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": null,
+          "review_required": false,
+          "description_contains": "thịt"
+        }
+      ]
+    },
+    {
+      "case_id": "M02",
+      "title": "Nhập tay: một ảnh và một chú thích, không có bằng chứng ghép",
+      "record_count": 2,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-03",
+              "confidence": [
+                "MEDIUM"
+              ]
+            }
+          },
+          "sent_date": null,
+          "review_required": true,
+          "review_reasons": [
+            "amount_missing",
+            "caption_ambiguous"
+          ]
+        },
+        {
+          "record_key": "R2",
+          "from_groups": [
+            "G2"
+          ],
+          "evidence_items": [
+            "m3"
+          ],
+          "evidence_kind": "self_declared",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "INCOME",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 5000000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-03",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": null,
           "review_required": false
         }
       ]

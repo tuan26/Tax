@@ -2,26 +2,45 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://tax-check.local/spec/messages.schema.json",
   "title": "Messages dataset",
-  "description": "Contract dữ liệu đầu vào cho bước gom tin nhắn, độc lập với Zalo API và OCR. Một file là toàn bộ tin nhắn của một hộ trong một khoảng thời gian. Phần 'messages' là dữ liệu gốc, chỉ được thêm, không bao giờ sửa. Kết quả OCR nằm riêng ở 'extractions' và luôn ghi rõ nguồn sinh ra nó.",
+  "description": "Contract dữ liệu đầu vào cho bước gom tin nhắn, độc lập với Zalo API và OCR. Một file là toàn bộ tin nhắn của một hộ trong một khoảng thời gian. Phần 'messages' là dữ liệu gốc, chỉ được thêm, không bao giờ sửa. Kết quả OCR nằm riêng ở 'extractions' và luôn ghi rõ nguồn sinh ra nó. Từ v1.1: tin nhập tay không có giờ gửi hay người gửi thì để null, không bao giờ tự điền giá trị đoán.",
   "type": "object",
-  "required": ["schema_version", "dataset_id", "customer", "senders", "messages"],
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "customer",
+    "senders",
+    "messages"
+  ],
   "additionalProperties": false,
   "properties": {
-    "schema_version": { "const": "1.0" },
-    "dataset_id": { "type": "string", "minLength": 1 },
-    "customer": { "$ref": "#/$defs/customer" },
+    "schema_version": {
+      "const": "1.1"
+    },
+    "dataset_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "customer": {
+      "$ref": "#/$defs/customer"
+    },
     "senders": {
       "type": "array",
-      "items": { "$ref": "#/$defs/sender" }
+      "items": {
+        "$ref": "#/$defs/sender"
+      }
     },
     "messages": {
       "type": "array",
-      "items": { "$ref": "#/$defs/message" }
+      "items": {
+        "$ref": "#/$defs/message"
+      }
     },
     "extractions": {
       "description": "Dữ liệu suy ra từ file đính kèm (OCR hoặc đọc thủ công). Không bắt buộc. Trong bộ test, phần này giả lập đầu ra của bước OCR để test gom tin không phụ thuộc engine OCR nào.",
       "type": "array",
-      "items": { "$ref": "#/$defs/extraction" }
+      "items": {
+        "$ref": "#/$defs/extraction"
+      }
     }
   },
   "$defs": {
@@ -31,98 +50,303 @@
     },
     "customer": {
       "type": "object",
-      "required": ["customer_id", "name", "timezone", "business_day_cutoff"],
+      "required": [
+        "customer_id",
+        "name",
+        "timezone",
+        "business_day_cutoff"
+      ],
       "additionalProperties": false,
       "properties": {
-        "customer_id": { "$ref": "#/$defs/id" },
-        "name": { "type": "string" },
+        "customer_id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
         "timezone": {
           "description": "Múi giờ IANA dùng để quy đổi sent_at ra ngày kinh doanh.",
           "type": "string",
-          "examples": ["Asia/Ho_Chi_Minh"]
+          "examples": [
+            "Asia/Ho_Chi_Minh"
+          ]
         },
         "business_day_cutoff": {
           "description": "Giờ chốt ngày kinh doanh theo giờ địa phương. Tin gửi trước giờ này được tính vào ngày hôm trước.",
           "type": "string",
           "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
-          "examples": ["04:00"]
+          "examples": [
+            "04:00"
+          ]
         }
       }
     },
     "sender": {
       "type": "object",
-      "required": ["sender_id", "role"],
+      "required": [
+        "sender_id",
+        "role"
+      ],
       "additionalProperties": false,
       "properties": {
-        "sender_id": { "$ref": "#/$defs/id" },
-        "display_name": { "type": ["string", "null"] },
+        "sender_id": {
+          "$ref": "#/$defs/id"
+        },
+        "display_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "role": {
-          "enum": ["owner", "family", "staff", "accountant", "unknown"]
+          "enum": [
+            "owner",
+            "family",
+            "staff",
+            "accountant",
+            "unknown"
+          ]
         },
         "linked_customer_id": {
           "description": "Hộ mà người gửi được liên kết. null nếu chưa liên kết, khi đó tin của người này phải chờ kế toán gán.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },
     "message": {
       "type": "object",
-      "required": ["message_id", "customer_id", "conversation_id", "sender_id", "sent_at", "kind", "provenance"],
+      "required": [
+        "message_id",
+        "customer_id",
+        "conversation_id",
+        "sender_id",
+        "sent_at",
+        "kind",
+        "source_type",
+        "provenance"
+      ],
       "additionalProperties": false,
       "properties": {
-        "message_id": { "$ref": "#/$defs/id" },
-        "customer_id": { "$ref": "#/$defs/id" },
+        "message_id": {
+          "$ref": "#/$defs/id"
+        },
+        "customer_id": {
+          "$ref": "#/$defs/id"
+        },
         "conversation_id": {
           "description": "Cuộc chat chứa tin: chat 1-1 với OA, nhóm Zalo, hoặc một đợt upload.",
           "$ref": "#/$defs/id"
         },
-        "sender_id": { "$ref": "#/$defs/id" },
+        "sender_id": {
+          "description": "null khi không có bằng chứng ai gửi (ví dụ đoạn chat dán vào).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "sent_at": {
-          "description": "Thời điểm gửi, ISO 8601 có offset múi giờ. Không bao giờ dùng giờ không kèm múi giờ.",
-          "type": "string",
-          "format": "date-time",
-          "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+          "description": "Thời điểm gửi, ISO 8601 có offset múi giờ. null khi không có bằng chứng (nhập tay). Không bao giờ điền giờ đoán.",
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "kind": {
-          "enum": ["text", "image", "file", "sticker", "link", "voice", "system", "deleted", "unsupported"]
+          "enum": [
+            "text",
+            "image",
+            "file",
+            "sticker",
+            "link",
+            "voice",
+            "system",
+            "deleted",
+            "unsupported"
+          ]
+        },
+        "source_type": {
+          "description": "Kênh dữ liệu đi vào. Mọi chỉ số gom tin phải tách theo trường này.",
+          "enum": [
+            "ZALO_API",
+            "ZALO_MANUAL",
+            "FILE_UPLOAD",
+            "MANUAL_ENTRY"
+          ]
+        },
+        "batch_id": {
+          "description": "Đợt nhập tay chứa tin này. null với tin từ Zalo API.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "business_date": {
+          "description": "Ngày kinh doanh kế toán chọn cho đợt nhập tay. Bắt buộc khi sent_at là null.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "sequence": {
+          "description": "Thứ tự trong đợt nhập, nếu biết (ví dụ thứ tự dòng trong đoạn chat dán vào).",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
         },
         "text": {
           "description": "Nội dung chữ, giữ nguyên như người gửi gõ, kể cả lỗi chính tả. Với tin ảnh là chú thích đi kèm nếu có.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "attachments": {
           "type": "array",
-          "items": { "$ref": "#/$defs/attachment" }
+          "items": {
+            "$ref": "#/$defs/attachment"
+          }
         },
         "reply_to_message_id": {
           "description": "Tin được trả lời trực tiếp (tính năng trả lời của Zalo), nếu có.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "forwarded": { "type": "boolean", "default": false },
-        "edited_at": { "type": ["string", "null"], "format": "date-time" },
-        "provenance": { "$ref": "#/$defs/provenance" }
+        "forwarded": {
+          "type": "boolean",
+          "default": false
+        },
+        "edited_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        }
       },
       "allOf": [
         {
-          "if": { "properties": { "kind": { "enum": ["image", "file", "voice"] } } },
-          "then": { "required": ["attachments"], "properties": { "attachments": { "minItems": 1 } } }
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "image",
+                  "file",
+                  "voice"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "attachments"
+            ],
+            "properties": {
+              "attachments": {
+                "minItems": 1
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "kind": { "const": "text" } } },
-          "then": { "required": ["text"], "properties": { "text": { "type": "string", "minLength": 1 } } }
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "text"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "text"
+            ],
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sent_at": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "business_date"
+            ],
+            "properties": {
+              "business_date": {
+                "type": "string"
+              }
+            }
+          }
         }
       ]
     },
     "attachment": {
       "type": "object",
-      "required": ["attachment_id", "kind", "mime_type", "sha256", "storage_uri"],
+      "required": [
+        "attachment_id",
+        "kind",
+        "mime_type",
+        "sha256",
+        "storage_uri"
+      ],
       "additionalProperties": false,
       "properties": {
-        "attachment_id": { "$ref": "#/$defs/id" },
-        "kind": { "enum": ["image", "pdf", "file", "voice"] },
-        "file_name": { "type": ["string", "null"] },
-        "mime_type": { "type": "string" },
-        "size_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "attachment_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "image",
+            "pdf",
+            "file",
+            "voice"
+          ]
+        },
+        "file_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mime_type": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
         "sha256": {
           "description": "Băm của file gốc, dùng để phát hiện gửi lại cùng một file.",
           "type": "string",
@@ -132,22 +356,44 @@
           "description": "Vị trí file gốc trong kho lưu trữ bất biến.",
           "type": "string"
         },
-        "width": { "type": ["integer", "null"] },
-        "height": { "type": ["integer", "null"] }
+        "width": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "height": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
       }
     },
     "provenance": {
       "description": "Nguồn gốc tin nhắn. Giữ đủ để truy ngược về bản gốc.",
       "type": "object",
-      "required": ["source", "received_at"],
+      "required": [
+        "source",
+        "received_at"
+      ],
       "additionalProperties": false,
       "properties": {
         "source": {
-          "enum": ["zalo_oa_webhook", "zalo_group", "zalo_pc_manual", "upload", "synthetic"]
+          "enum": [
+            "zalo_oa_webhook",
+            "zalo_group",
+            "zalo_pc_manual",
+            "upload",
+            "synthetic"
+          ]
         },
         "source_message_id": {
           "description": "ID tin ở hệ thống nguồn, ví dụ msg_id của Zalo.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "received_at": {
           "description": "Thời điểm hệ thống nhận được tin. Có thể muộn hơn sent_at.",
@@ -156,48 +402,92 @@
         },
         "collected_by": {
           "description": "Người hoặc tiến trình thu thập, ví dụ 'webhook' hay mã kế toán khi chép tay.",
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "raw_payload": {
           "description": "Payload gốc từ nguồn, lưu nguyên vẹn. null với dữ liệu chép tay hoặc tổng hợp.",
-          "type": ["object", "null"]
+          "type": [
+            "object",
+            "null"
+          ]
         },
-        "raw_payload_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+        "raw_payload_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        }
       }
     },
     "scored_value": {
       "description": "Một giá trị kèm độ tin cậy riêng của nó.",
       "type": "object",
-      "required": ["value", "confidence"],
+      "required": [
+        "value",
+        "confidence"
+      ],
       "additionalProperties": false,
       "properties": {
         "value": {},
-        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
       }
     },
     "extraction": {
       "type": "object",
-      "required": ["extraction_id", "attachment_id", "engine", "doc_type"],
+      "required": [
+        "extraction_id",
+        "attachment_id",
+        "engine",
+        "doc_type"
+      ],
       "additionalProperties": false,
       "properties": {
-        "extraction_id": { "$ref": "#/$defs/id" },
-        "attachment_id": { "$ref": "#/$defs/id" },
+        "extraction_id": {
+          "$ref": "#/$defs/id"
+        },
+        "attachment_id": {
+          "$ref": "#/$defs/id"
+        },
         "engine": {
           "description": "Engine và phiên bản sinh ra kết quả, ví dụ 'fixture', 'manual', 'ocr-x@1.2'.",
           "type": "string"
         },
-        "doc_type": { "$ref": "#/$defs/scored_value" },
+        "doc_type": {
+          "$ref": "#/$defs/scored_value"
+        },
         "direction": {
           "description": "Với ảnh chuyển khoản: tiền ra (outgoing) hay tiền vào (incoming).",
           "$ref": "#/$defs/scored_value"
         },
-        "total_amount": { "$ref": "#/$defs/scored_value" },
-        "document_date": { "$ref": "#/$defs/scored_value" },
-        "counterparty_name": { "$ref": "#/$defs/scored_value" },
-        "invoice_number": { "$ref": "#/$defs/scored_value" },
-        "page": { "$ref": "#/$defs/scored_value" },
-        "description": { "$ref": "#/$defs/scored_value" },
-        "transfer_note": { "$ref": "#/$defs/scored_value" }
+        "total_amount": {
+          "$ref": "#/$defs/scored_value"
+        },
+        "document_date": {
+          "$ref": "#/$defs/scored_value"
+        },
+        "counterparty_name": {
+          "$ref": "#/$defs/scored_value"
+        },
+        "invoice_number": {
+          "$ref": "#/$defs/scored_value"
+        },
+        "page": {
+          "$ref": "#/$defs/scored_value"
+        },
+        "description": {
+          "$ref": "#/$defs/scored_value"
+        },
+        "transfer_note": {
+          "$ref": "#/$defs/scored_value"
+        }
       }
     }
   }

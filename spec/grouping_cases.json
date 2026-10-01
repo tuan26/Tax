@@ -1,6 +1,6 @@
 {
   "suite": "grouping_cases",
-  "suite_version": "1.0",
+  "suite_version": "1.1",
   "input_schema": "messages.schema.json",
   "description": "Bộ test gom tin nhắn thành giao dịch (MESSAGE → MESSAGE_GROUP). Đầu vào mỗi ca là một tài liệu hợp lệ theo messages.schema.json. Kỳ vọng mô tả quyết định gom, không cố định ID nhóm hệ thống sinh ra: group_key chỉ là nhãn trong file này, so khớp theo tập anchor_items.",
   "conventions": {
@@ -13,7 +13,8 @@
       "UNMATCHED": "Không thuộc nhóm nào. needs_review cho biết có cần hiện ra cho kế toán xem hay không (sticker thì không, ghi chú có thể là khoản chi thì có)."
     },
     "candidates": "Nhãn nhóm trong ca. 'G1+G2' là áp cho cả hai. 'NONE' là không liên kết, item tự thành giao dịch riêng.",
-    "must_not_auto_link": "Cặp item hoặc nhóm không bao giờ được tự gom chung. Vi phạm là lỗi nghiêm trọng."
+    "must_not_auto_link": "Cặp item hoặc nhóm không bao giờ được tự gom chung. Vi phạm là lỗi nghiêm trọng.",
+    "manual_import": "Tin có sent_at null (nhập tay): nằm chung đợt nhập hay đứng gần nhau không phải bằng chứng. Chỉ được tự gán khi số tiền hoặc nội dung khớp duy nhất. Chỉ số của các ca manual_import phải báo cáo tách riêng."
   },
   "scoring": {
     "unit": "Mỗi quyết định trong groups, links và unmatched được chấm riêng.",
@@ -43,7 +44,7 @@
       ],
       "description": "Trường hợp chuẩn: một ảnh, ngay sau là số tiền khớp OCR và chú thích.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G01",
         "customer": {
           "customer_id": "CUS-001",
@@ -73,6 +74,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -103,6 +108,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:00:20+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "2.350.000đ",
             "provenance": {
               "source": "synthetic",
@@ -120,6 +129,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:00:40+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "tiền thịt",
             "provenance": {
               "source": "synthetic",
@@ -203,7 +216,7 @@
       ],
       "description": "Ví dụ gốc của V1. Hai hóa đơn khác người bán nên là hai giao dịch, nhưng OCR không đọc được tổng tiền. '2tr5', 'tiền thịt' và 'cái trên của hôm qua' không có bằng chứng để gán cho A hay B. Hệ thống không được chọn thay kế toán.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G02",
         "customer": {
           "customer_id": "CUS-001",
@@ -233,6 +246,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T10:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -263,6 +280,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T10:01:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -293,6 +314,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T10:02:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "2tr5",
             "provenance": {
               "source": "synthetic",
@@ -310,6 +335,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T10:03:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "tiền thịt",
             "provenance": {
               "source": "synthetic",
@@ -327,6 +356,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T10:04:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "cái trên của hôm qua nhé",
             "provenance": {
               "source": "synthetic",
@@ -438,7 +471,7 @@
       ],
       "description": "Giống G02 nhưng OCR đọc được tổng: chỉ ảnh B có 2.500.000 và mô tả có chữ 'thịt'. Bằng chứng đủ nên được phép tự gán.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G03",
         "customer": {
           "customer_id": "CUS-001",
@@ -468,6 +501,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -498,6 +535,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:01:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -528,6 +569,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:02:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "2tr5",
             "provenance": {
               "source": "synthetic",
@@ -545,6 +590,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:03:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "tiền thịt",
             "provenance": {
               "source": "synthetic",
@@ -667,7 +716,7 @@
       ],
       "description": "Năm hóa đơn riêng biệt gửi một lần, mỗi ảnh có tổng tiền riêng nên là 5 giao dịch. Chú thích 'hôm qua' áp cho cả 5. OCR không đọc được ngày trên hóa đơn.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G04",
         "customer": {
           "customer_id": "CUS-001",
@@ -697,6 +746,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T09:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -771,6 +824,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T09:01:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "Đây là hàng hôm qua",
             "provenance": {
               "source": "synthetic",
@@ -937,7 +994,7 @@
       ],
       "description": "Hai ảnh cùng số hóa đơn, cùng người bán, trang 1/2 và 2/2. Tổng tiền chỉ có ở trang 2. Là một giao dịch.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G05",
         "customer": {
           "customer_id": "CUS-001",
@@ -967,6 +1024,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T15:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -997,6 +1058,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T15:00:30+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -1102,7 +1167,7 @@
       ],
       "description": "Không có số hóa đơn, không có số trang, chỉ ảnh thứ hai có tổng. Có thể là 2 trang của một hóa đơn hoặc 2 lần mua. Cách chia nhóm là AMBIGUOUS.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G06",
         "customer": {
           "customer_id": "CUS-001",
@@ -1132,6 +1197,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-03T11:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -1162,6 +1231,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-03T11:00:40+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -1260,7 +1333,7 @@
       ],
       "description": "Gửi ngày 05/10 nhưng hóa đơn ngày 28/09. Gom nhóm vẫn chắc chắn. Ngày hạch toán đề xuất theo ngày chứng từ. Việc báo lệch kỳ là của rule DQ-04, không phải của bước gom.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G07",
         "customer": {
           "customer_id": "CUS-001",
@@ -1290,6 +1363,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-05T08:15:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -1320,6 +1397,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-05T08:15:30+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "hđ gas tuần trước",
             "provenance": {
               "source": "synthetic",
@@ -1393,7 +1474,7 @@
       ],
       "description": "Tin chữ là nguồn duy nhất. Ngày hạch toán là ngày hôm trước ngày gửi. Đây là số tự khai, không phải chứng từ.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G08",
         "customer": {
           "customer_id": "CUS-001",
@@ -1423,6 +1504,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T09:00:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "Doanh thu hôm qua 7tr2",
             "provenance": {
               "source": "synthetic",
@@ -1460,7 +1545,7 @@
       ],
       "description": "Gửi 00:45 ngày 02/10, giờ chốt 04:00, nên 'hôm nay' là ngày kinh doanh 01/10.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G09",
         "customer": {
           "customer_id": "CUS-001",
@@ -1490,6 +1575,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T00:45:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "Doanh thu hôm nay 12tr5",
             "provenance": {
               "source": "synthetic",
@@ -1528,7 +1617,7 @@
       ],
       "description": "Gửi 01:30 ngày 02/10, trước giờ chốt nên ngày kinh doanh là 01/10. Người gửi có thể muốn nói tối 01/10 (vừa qua) hoặc tối 30/09. Ngày hạch toán là AMBIGUOUS, số tiền và loại vẫn chắc chắn.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G10",
         "customer": {
           "customer_id": "CUS-001",
@@ -1558,6 +1647,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T01:30:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "Tối qua bán được 6tr",
             "provenance": {
               "source": "synthetic",
@@ -1594,7 +1687,7 @@
       ],
       "description": "Chủ hộ gửi ảnh hóa đơn, thu ngân gửi một khoản chi khác ngay sau. Không được gom tin của hai người vào một nhóm khi không có bằng chứng liên quan.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G11",
         "customer": {
           "customer_id": "CUS-001",
@@ -1624,6 +1717,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -1654,6 +1751,10 @@
             "sender_id": "S-STAFF",
             "sent_at": "2026-10-01T10:01:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "chi 500k tiền ship",
             "provenance": {
               "source": "synthetic",
@@ -1730,7 +1831,7 @@
       ],
       "description": "Sticker, lời nhắn công việc và ảnh không phải chứng từ không được tạo bản ghi và không được gom vào nhóm.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G12",
         "customer": {
           "customer_id": "CUS-001",
@@ -1760,6 +1861,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -1790,6 +1895,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:00:20+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "nước ngọt nha",
             "provenance": {
               "source": "synthetic",
@@ -1807,6 +1916,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:01:00+07:00",
             "kind": "sticker",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -1824,6 +1937,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:02:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "Mai anh qua lấy hàng nhé",
             "provenance": {
               "source": "synthetic",
@@ -1841,6 +1958,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:03:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -1969,7 +2090,7 @@
       ],
       "description": "Ảnh ngày 05/10 có cùng sha256 với ảnh ngày 02/10. Là bản trùng chắc chắn, không tạo bản ghi thứ hai.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G13",
         "customer": {
           "customer_id": "CUS-001",
@@ -1999,6 +2120,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T10:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -2029,6 +2154,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-05T08:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -2112,7 +2241,7 @@
       ],
       "description": "Hai ảnh khác nhau nhưng cùng người bán, cùng ngày, cùng số tiền, không có số hóa đơn. Có thể là chụp lại hoặc hai lần mua giống nhau. Không được tự loại trùng.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G14",
         "customer": {
           "customer_id": "CUS-001",
@@ -2142,6 +2271,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T10:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -2172,6 +2305,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-03T09:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -2277,7 +2414,7 @@
       ],
       "description": "Tách thành hai nhóm từ cùng một tin, mỗi nhóm một đoạn. Cả hai bản ghi trỏ về cùng tin làm bằng chứng.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G15",
         "customer": {
           "customer_id": "CUS-001",
@@ -2307,6 +2444,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T21:00:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "Hôm nay bán 8tr4, nhập hàng 3tr",
             "provenance": {
               "source": "synthetic",
@@ -2353,7 +2494,7 @@
       ],
       "description": "Tin sửa không ghi đè bản ghi cũ. Bản ghi mới thay thế bản cũ, bản cũ giữ lại với trạng thái SUPERSEDED. Mọi đính chính đều phải chờ duyệt.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G16",
         "customer": {
           "customer_id": "CUS-001",
@@ -2383,6 +2524,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T21:00:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "Doanh thu hôm nay 8tr",
             "provenance": {
               "source": "synthetic",
@@ -2400,6 +2545,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-02T08:30:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "Sửa lại: doanh thu hôm qua 9tr chứ không phải 8tr",
             "provenance": {
               "source": "synthetic",
@@ -2454,7 +2603,7 @@
       ],
       "description": "Hai chứng từ của cùng một giao dịch kinh tế. Bước gom tạo hai bản ghi riêng, không gộp. Quan hệ giữa chúng là việc của MATCH, nên kỳ vọng có một MATCH đề xuất kèm bằng chứng. Sổ theo ngày không được cộng khoản chi này hai lần.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G17",
         "customer": {
           "customer_id": "CUS-001",
@@ -2484,6 +2633,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T14:20:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -2514,6 +2667,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T14:22:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -2633,7 +2790,7 @@
       ],
       "description": "Chỉ có một ảnh nên gom nhóm chắc chắn, nhưng 2.500.000 khác 2.350.000 OCR đọc rất chắc. Nhóm có độ tin cậy cao, số tiền thì không. Đây là lý do confidence phải tính cho từng quyết định.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G18",
         "customer": {
           "customer_id": "CUS-001",
@@ -2663,6 +2820,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -2693,6 +2854,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:00:20+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "2tr5",
             "provenance": {
               "source": "synthetic",
@@ -2763,7 +2928,7 @@
       ],
       "description": "Ví dụ trong tài liệu V1: chuyển khoản 5.000.000đ, chú thích 'Tiền mua nguyên liệu'.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G19",
         "customer": {
           "customer_id": "CUS-001",
@@ -2793,6 +2958,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T14:20:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -2823,6 +2992,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T14:21:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "Tiền mua nguyên liệu",
             "provenance": {
               "source": "synthetic",
@@ -2896,7 +3069,7 @@
       ],
       "description": "'tiền điện tháng này' gửi sau 5 giờ, không có số tiền, nội dung không khớp ảnh trước. Không gom, nhưng phải hiện ra cho kế toán xem vì có thể là một khoản chi thiếu chứng từ.",
       "input": {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "dataset_id": "spec-G20",
         "customer": {
           "customer_id": "CUS-001",
@@ -2926,6 +3099,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T10:00:00+07:00",
             "kind": "image",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": null,
             "provenance": {
               "source": "synthetic",
@@ -2956,6 +3133,10 @@
             "sender_id": "S-OWNER",
             "sent_at": "2026-10-01T15:10:00+07:00",
             "kind": "text",
+            "source_type": "ZALO_API",
+            "batch_id": null,
+            "business_date": null,
+            "sequence": null,
             "text": "tiền điện tháng này",
             "provenance": {
               "source": "synthetic",
@@ -3021,6 +3202,431 @@
             "reason": "ngoài khung thời gian và nội dung không khớp"
           }
         ],
+        "requires_human_review": true
+      }
+    },
+    {
+      "case_id": "M01",
+      "title": "Nhập tay: số tiền và chú thích khớp duy nhất một ảnh",
+      "tags": [
+        "manual_import",
+        "evidence_resolves"
+      ],
+      "description": "Kế toán kéo 2 ảnh từ Zalo PC và dán đoạn chat vào cùng một đợt nhập, chọn ngày 03/10. Không có giờ gửi, không có người gửi. Chỉ gán khi số tiền hoặc nội dung khớp duy nhất một ảnh.",
+      "input": {
+        "schema_version": "1.1",
+        "dataset_id": "spec-M01",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-BATCH-M01",
+            "sender_id": null,
+            "sent_at": null,
+            "kind": "image",
+            "source_type": "ZALO_MANUAL",
+            "batch_id": "B-M01",
+            "business_date": "2026-10-03",
+            "sequence": 0,
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-04T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "bb227c29a86f626e01969e4a9749269edac23506607b23bd0d3ddafb4b3141a1",
+                "storage_uri": "fixture://M01/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-BATCH-M01",
+            "sender_id": null,
+            "sent_at": null,
+            "kind": "image",
+            "source_type": "ZALO_MANUAL",
+            "batch_id": "B-M01",
+            "business_date": "2026-10-03",
+            "sequence": 1,
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-04T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a2",
+                "kind": "image",
+                "file_name": "a2.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "ef403192e9a8ff772476090c689f348150568af892059f3fd3f4cda2f263d386",
+                "storage_uri": "fixture://M01/a2.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m3",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-BATCH-M01",
+            "sender_id": null,
+            "sent_at": null,
+            "kind": "text",
+            "source_type": "ZALO_MANUAL",
+            "batch_id": "B-M01",
+            "business_date": "2026-10-03",
+            "sequence": 2,
+            "text": "2tr5",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-04T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          },
+          {
+            "message_id": "m4",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-BATCH-M01",
+            "sender_id": null,
+            "sent_at": null,
+            "kind": "text",
+            "source_type": "ZALO_MANUAL",
+            "batch_id": "B-M01",
+            "business_date": "2026-10-03",
+            "sequence": 3,
+            "text": "tiền thịt",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-04T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          },
+          {
+            "message_id": "m5",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-BATCH-M01",
+            "sender_id": null,
+            "sent_at": null,
+            "kind": "text",
+            "source_type": "ZALO_MANUAL",
+            "batch_id": "B-M01",
+            "business_date": "2026-10-03",
+            "sequence": 4,
+            "text": "ok em nhé",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-04T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 2350000,
+              "confidence": 0.96
+            },
+            "document_date": {
+              "value": "2026-10-03",
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Tân Phát",
+              "confidence": 0.9
+            },
+            "description": {
+              "value": "Rau củ các loại",
+              "confidence": 0.85
+            }
+          },
+          {
+            "extraction_id": "X-a2",
+            "attachment_id": "a2",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 2500000,
+              "confidence": 0.96
+            },
+            "document_date": {
+              "value": "2026-10-03",
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Kim Long",
+              "confidence": 0.9
+            },
+            "description": {
+              "value": "Thịt bò 5kg",
+              "confidence": 0.87
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          },
+          {
+            "group_key": "G2",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m2#a2"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m3",
+            "role": "amount_annotation",
+            "status": "CONFIDENT",
+            "targets": [
+              "G2"
+            ]
+          },
+          {
+            "item": "m4",
+            "role": "caption",
+            "status": "CONFIDENT",
+            "targets": [
+              "G2"
+            ]
+          }
+        ],
+        "unmatched": [
+          {
+            "item": "m5",
+            "status": "UNMATCHED",
+            "reason": "noise",
+            "needs_review": false
+          }
+        ],
+        "must_not_auto_link": [
+          {
+            "a": "m3",
+            "b": "G1",
+            "reason": "số tiền không khớp"
+          }
+        ],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "M02",
+      "title": "Nhập tay: một ảnh và một chú thích, không có bằng chứng ghép",
+      "tags": [
+        "manual_import",
+        "ambiguous"
+      ],
+      "description": "Chỉ có một ảnh trong đợt nhập, nhưng nằm cùng đợt không phải bằng chứng là chú thích thuộc ảnh đó. Ở chế độ Zalo API, một ảnh duy nhất gửi liền trước là bằng chứng; ở chế độ nhập tay thì không. Số tự khai không có ngày tương đối được hạch toán vào ngày kế toán chọn.",
+      "input": {
+        "schema_version": "1.1",
+        "dataset_id": "spec-M02",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-BATCH-M02",
+            "sender_id": null,
+            "sent_at": null,
+            "kind": "image",
+            "source_type": "ZALO_MANUAL",
+            "batch_id": "B-M02",
+            "business_date": "2026-10-03",
+            "sequence": 0,
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-04T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "b5b940e08c0e6ff59b72f9b53be762cd182ae68664eb6a8f69cf95d13d81063a",
+                "storage_uri": "fixture://M02/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-BATCH-M02",
+            "sender_id": null,
+            "sent_at": null,
+            "kind": "text",
+            "source_type": "ZALO_MANUAL",
+            "batch_id": "B-M02",
+            "business_date": "2026-10-03",
+            "sequence": 1,
+            "text": "tiền gas",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-04T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          },
+          {
+            "message_id": "m3",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-BATCH-M02",
+            "sender_id": null,
+            "sent_at": null,
+            "kind": "text",
+            "source_type": "ZALO_MANUAL",
+            "batch_id": "B-M02",
+            "business_date": "2026-10-03",
+            "sequence": 2,
+            "text": "Doanh thu 5tr",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-04T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "receipt",
+              "confidence": 0.9
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          },
+          {
+            "group_key": "G2",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m3"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m2",
+            "role": "caption",
+            "status": "AMBIGUOUS",
+            "candidates": [
+              "G1",
+              "NONE"
+            ],
+            "note": "không có giờ gửi nên một ứng viên duy nhất vẫn chưa đủ"
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [],
         "requires_human_review": true
       }
     }
