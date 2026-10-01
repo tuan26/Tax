@@ -1,0 +1,57 @@
+# Backend pilot
+
+FastAPI + PostgreSQL. Lõi nghiệp vụ (`app/domain/`) là Python thuần, không phụ thuộc DB, và được
+chấm bằng bộ spec trong `../spec/`.
+
+## Chạy test
+
+```bash
+pip install -r requirements.txt
+# Test lõi nghiệp vụ và bộ spec, không cần DB:
+python -m pytest tests/test_parsers.py tests/test_spec_suite.py
+# Toàn bộ, kể cả test tích hợp và release gate, cần một PostgreSQL 16 với quyền superuser:
+TEST_PG_ADMIN_URL="postgresql://postgres@/postgres?host=/tmp&port=5432" python -m pytest
+```
+
+## Chạy app
+
+```bash
+export ADMIN_DATABASE_URL=postgresql://owner@db/tax        # role sở hữu schema
+python -m app.cli migrate
+psql "$ADMIN_DATABASE_URL" -c "CREATE ROLE tax_app_login LOGIN PASSWORD '...' IN ROLE tax_app"
+python -m app.cli create-tenant "Văn phòng kế toán A"     # in ra tenant_id
+python -m app.cli create-user <tenant_id> ketoan@example.com "Tên kế toán"
+
+export DATABASE_URL=postgresql://tax_app_login:...@db/tax  # role của app, không phải superuser
+export STORAGE_DIR=/data/storage
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+python -m app.worker                                       # xử lý lại đợt nhập bị lỗi
+```
+
+`FOREIGN_AI_ENABLED` mặc định tắt. Chỉ bật khi đã có ý kiến pháp lý về pipeline hybrid.
+`OCR_PROVIDER` mặc định `none`: ảnh vào hàng chờ để kế toán nhập. Chưa có OCR trong nước nào được duyệt (Q35).
+
+## Pilot release gate
+
+| Gate | Kiểm bằng | Trạng thái |
+|---|---|---|
+| Dữ liệu gốc chỉ thêm | `test_raw_data_is_append_only`, `test_decisions_only_superseded_never_rewritten`, `test_storage_never_overwrites` | Qua |
+| Spec gom tin, 0 lần tự ghép sai | `tests/test_spec_suite.py` (22 ca: 20 Zalo API, 2 nhập tay) | Qua |
+| 100% thao tác ghi có audit | `test_every_write_is_audited` | Qua |
+| Cô lập tenant | `test_tenant_isolation_api`, `test_tenant_isolation_db`, `test_app_role_is_not_superuser` | Qua |
+| Backup và restore | chưa có | Tuần 2 |
+| AI nước ngoài fail-closed | `test_foreign_ai_fail_closed`, `test_default_config_disables_foreign_ai` | Qua |
+
+Các đảm bảo nằm ở tầng DB (`app/migrations/001_init.sql`), không phụ thuộc code API:
+trigger chặn sửa/xóa dữ liệu gốc (kể cả với role quản trị), trigger audit cho mọi INSERT/UPDATE
+trên bảng nghiệp vụ, Row Level Security theo tenant với `FORCE`, khóa ngoại kép `(tenant_id, id)`
+để không tham chiếu chéo tenant.
+
+Bảng vận hành không có audit: `user_session`, `processing_job`, `activity_log`.
+
+## Cấu trúc
+
+- `app/domain/`: đọc số tiền, ngày, gom tin, chuẩn hóa bản ghi, bộ chấm điểm.
+- `app/pipeline.py`: DB ↔ lõi. Quyết định đã có không bao giờ bị engine ghi đè.
+- `app/review.py`: thao tác của kế toán. Chỉ thêm quyết định mới, đánh dấu quyết định cũ hết hiệu lực.
+- `app/api.py`: HTTP API. `app/ai_outbound.py`: cổng duy nhất ra AI nước ngoài.
