@@ -1,0 +1,3028 @@
+{
+  "suite": "grouping_cases",
+  "suite_version": "1.0",
+  "input_schema": "messages.schema.json",
+  "description": "Bộ test gom tin nhắn thành giao dịch (MESSAGE → MESSAGE_GROUP). Đầu vào mỗi ca là một tài liệu hợp lệ theo messages.schema.json. Kỳ vọng mô tả quyết định gom, không cố định ID nhóm hệ thống sinh ra: group_key chỉ là nhãn trong file này, so khớp theo tập anchor_items.",
+  "conventions": {
+    "item_ref": "Tin chữ hoặc sticker: message_id. File đính kèm: message_id#attachment_id.",
+    "group": "Một nhóm là một giao dịch. anchor_items là các item tạo nên giao dịch đó (ảnh chứng từ, hoặc tin chữ tự khai). Một tin chữ có thể là anchor của nhiều nhóm khi nó chứa nhiều giao dịch, phân biệt bằng segment.",
+    "link": "Item bổ sung thông tin cho nhóm: amount_annotation, caption, date_annotation, date_correction, correction, duplicate_of.",
+    "status": {
+      "CONFIDENT": "Đủ bằng chứng. Hệ thống được phép tự quyết định.",
+      "AMBIGUOUS": "Thiếu bằng chứng để chọn. Hệ thống phải đưa vào hàng đợi duyệt và nên đưa ra các ứng viên trong candidates. Tự quyết định ở đây bị tính là ghép sai, kể cả khi đoán trúng.",
+      "UNMATCHED": "Không thuộc nhóm nào. needs_review cho biết có cần hiện ra cho kế toán xem hay không (sticker thì không, ghi chú có thể là khoản chi thì có)."
+    },
+    "candidates": "Nhãn nhóm trong ca. 'G1+G2' là áp cho cả hai. 'NONE' là không liên kết, item tự thành giao dịch riêng.",
+    "must_not_auto_link": "Cặp item hoặc nhóm không bao giờ được tự gom chung. Vi phạm là lỗi nghiêm trọng."
+  },
+  "scoring": {
+    "unit": "Mỗi quyết định trong groups, links và unmatched được chấm riêng.",
+    "outcomes": {
+      "auto_correct": "Kỳ vọng CONFIDENT, hệ thống tự quyết đúng.",
+      "review_flagged": "Hệ thống đưa vào hàng đợi duyệt. Đúng nếu kỳ vọng là AMBIGUOUS hoặc UNMATCHED cần duyệt. Với kỳ vọng CONFIDENT thì không sai nhưng tốn công kế toán.",
+      "wrong_auto": "Hệ thống tự quyết sai, tự quyết ở chỗ kỳ vọng AMBIGUOUS, tự gom một item UNMATCHED, hoặc vi phạm must_not_auto_link."
+    },
+    "metrics": {
+      "auto_correct_rate": "auto_correct / số quyết định kỳ vọng CONFIDENT",
+      "ambiguous_flag_rate": "số quyết định AMBIGUOUS được đưa vào duyệt / số quyết định kỳ vọng AMBIGUOUS",
+      "wrong_auto_rate": "wrong_auto / tổng số quyết định. Chỉ số an toàn chính.",
+      "human_review_rate": "review_flagged / tổng số quyết định"
+    },
+    "thresholds": {
+      "wrong_auto_rate_max": 0.02,
+      "must_not_auto_link_violations_max": 0,
+      "note": "Chấp nhận human_review_rate cao (ví dụ 15%) để giữ wrong_auto_rate thấp."
+    }
+  },
+  "cases": [
+    {
+      "case_id": "G01",
+      "title": "Ảnh hóa đơn + số tiền + chú thích",
+      "tags": [
+        "happy_path"
+      ],
+      "description": "Trường hợp chuẩn: một ảnh, ngay sau là số tiền khớp OCR và chú thích.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G01",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "ce339a78bb48ef7729638c7fbd45024832cff25826580f5325f95965d53d43ab",
+                "storage_uri": "fixture://G01/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:00:20+07:00",
+            "kind": "text",
+            "text": "2.350.000đ",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:00:20+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          },
+          {
+            "message_id": "m3",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:00:40+07:00",
+            "kind": "text",
+            "text": "tiền thịt",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:00:40+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 2350000,
+              "confidence": 0.97
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": 0.95
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng thực phẩm Hòa",
+              "confidence": 0.9
+            },
+            "description": {
+              "value": "Thịt heo 15kg",
+              "confidence": 0.88
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m2",
+            "role": "amount_annotation",
+            "status": "CONFIDENT",
+            "targets": [
+              "G1"
+            ]
+          },
+          {
+            "item": "m3",
+            "role": "caption",
+            "status": "CONFIDENT",
+            "targets": [
+              "G1"
+            ]
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G02",
+      "title": "Hai ảnh không đọc được tổng, số tiền và chú thích không rõ thuộc ảnh nào",
+      "tags": [
+        "ambiguous",
+        "multi_image",
+        "multi_amount",
+        "relative_date"
+      ],
+      "description": "Ví dụ gốc của V1. Hai hóa đơn khác người bán nên là hai giao dịch, nhưng OCR không đọc được tổng tiền. '2tr5', 'tiền thịt' và 'cái trên của hôm qua' không có bằng chứng để gán cho A hay B. Hệ thống không được chọn thay kế toán.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G02",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T10:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T10:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "3043e4145ba8735bd1ef244fbac3d62001d38d5baec3156565317803a831e6ec",
+                "storage_uri": "fixture://G02/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T10:01:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T10:01:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a2",
+                "kind": "image",
+                "file_name": "a2.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "1f0678707feb271ced12347ce85c7da0ffb5d33f59eb02d6e27805b2e223bace",
+                "storage_uri": "fixture://G02/a2.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m3",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T10:02:00+07:00",
+            "kind": "text",
+            "text": "2tr5",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T10:02:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          },
+          {
+            "message_id": "m4",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T10:03:00+07:00",
+            "kind": "text",
+            "text": "tiền thịt",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T10:03:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          },
+          {
+            "message_id": "m5",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T10:04:00+07:00",
+            "kind": "text",
+            "text": "cái trên của hôm qua nhé",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T10:04:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.9
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Tân Phát",
+              "confidence": 0.85
+            },
+            "invoice_number": {
+              "value": "0451",
+              "confidence": 0.8
+            }
+          },
+          {
+            "extraction_id": "X-a2",
+            "attachment_id": "a2",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.9
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Kim Long",
+              "confidence": 0.85
+            },
+            "invoice_number": {
+              "value": "1188",
+              "confidence": 0.8
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          },
+          {
+            "group_key": "G2",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m2#a2"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m3",
+            "role": "amount_annotation",
+            "status": "AMBIGUOUS",
+            "candidates": [
+              "G1",
+              "G2"
+            ]
+          },
+          {
+            "item": "m4",
+            "role": "caption",
+            "status": "AMBIGUOUS",
+            "candidates": [
+              "G1",
+              "G2"
+            ]
+          },
+          {
+            "item": "m5",
+            "role": "date_correction",
+            "status": "AMBIGUOUS",
+            "candidates": [
+              "G1",
+              "G2",
+              "G1+G2"
+            ],
+            "note": "'cái trên' có thể chỉ ảnh B, hoặc cả hai ảnh"
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": true
+      }
+    },
+    {
+      "case_id": "G03",
+      "title": "Hai ảnh, số tiền và chú thích được phân giải bằng bằng chứng OCR",
+      "tags": [
+        "multi_image",
+        "multi_amount",
+        "evidence_resolves"
+      ],
+      "description": "Giống G02 nhưng OCR đọc được tổng: chỉ ảnh B có 2.500.000 và mô tả có chữ 'thịt'. Bằng chứng đủ nên được phép tự gán.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G03",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "57277c9a63354b9d81e564922a5de9380ae24adfc9bd88cc5aca5c84fff2a42d",
+                "storage_uri": "fixture://G03/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:01:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:01:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a2",
+                "kind": "image",
+                "file_name": "a2.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "5f0395a484b4707e2500eca2c29111e84a4b94ff1122e24136ae7ed07d275735",
+                "storage_uri": "fixture://G03/a2.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m3",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:02:00+07:00",
+            "kind": "text",
+            "text": "2tr5",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:02:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          },
+          {
+            "message_id": "m4",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:03:00+07:00",
+            "kind": "text",
+            "text": "tiền thịt",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:03:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 2350000,
+              "confidence": 0.96
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Tân Phát",
+              "confidence": 0.9
+            },
+            "description": {
+              "value": "Rau củ các loại",
+              "confidence": 0.85
+            }
+          },
+          {
+            "extraction_id": "X-a2",
+            "attachment_id": "a2",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 2500000,
+              "confidence": 0.96
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Kim Long",
+              "confidence": 0.9
+            },
+            "description": {
+              "value": "Thịt bò 5kg",
+              "confidence": 0.87
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          },
+          {
+            "group_key": "G2",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m2#a2"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m3",
+            "role": "amount_annotation",
+            "status": "CONFIDENT",
+            "targets": [
+              "G2"
+            ],
+            "note": "2.500.000 chỉ khớp tổng của ảnh B"
+          },
+          {
+            "item": "m4",
+            "role": "caption",
+            "status": "CONFIDENT",
+            "targets": [
+              "G2"
+            ],
+            "note": "mô tả OCR của B có 'thịt'"
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [
+          {
+            "a": "m3",
+            "b": "G1",
+            "reason": "số tiền không khớp"
+          }
+        ],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G04",
+      "title": "Album 5 ảnh + một chú thích ngày cho cả album",
+      "tags": [
+        "multi_image",
+        "relative_date",
+        "burst"
+      ],
+      "description": "Năm hóa đơn riêng biệt gửi một lần, mỗi ảnh có tổng tiền riêng nên là 5 giao dịch. Chú thích 'hôm qua' áp cho cả 5. OCR không đọc được ngày trên hóa đơn.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G04",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T09:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "4d9859b4506a937a8214d01f979855c825b4777bbcfca047c0381596375430ee",
+                "storage_uri": "fixture://G04/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              },
+              {
+                "attachment_id": "a2",
+                "kind": "image",
+                "file_name": "a2.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 181000,
+                "sha256": "d7559663a2bf11d45736cdb3714e9a5680559beb0980031435f11ead05ce3b45",
+                "storage_uri": "fixture://G04/a2.jpg",
+                "width": 1080,
+                "height": 1440
+              },
+              {
+                "attachment_id": "a3",
+                "kind": "image",
+                "file_name": "a3.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 182000,
+                "sha256": "533ef8dd6234538c07afe9a963f5773cf1fc94ac5dc2376e2420b8fb95a275f8",
+                "storage_uri": "fixture://G04/a3.jpg",
+                "width": 1080,
+                "height": 1440
+              },
+              {
+                "attachment_id": "a4",
+                "kind": "image",
+                "file_name": "a4.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 183000,
+                "sha256": "b419421070bc38e28d763964f1516419a8df2d83756fc48be29249430cdda136",
+                "storage_uri": "fixture://G04/a4.jpg",
+                "width": 1080,
+                "height": 1440
+              },
+              {
+                "attachment_id": "a5",
+                "kind": "image",
+                "file_name": "a5.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 184000,
+                "sha256": "73485aa4201aa11a854b34f9760799a2e9dcfa55edfcb78c0a160213bcfd029e",
+                "storage_uri": "fixture://G04/a5.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T09:01:00+07:00",
+            "kind": "text",
+            "text": "Đây là hàng hôm qua",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T09:01:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "receipt",
+              "confidence": 0.9
+            },
+            "total_amount": {
+              "value": 320000,
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Tạp hóa Lan",
+              "confidence": 0.8
+            }
+          },
+          {
+            "extraction_id": "X-a2",
+            "attachment_id": "a2",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "receipt",
+              "confidence": 0.9
+            },
+            "total_amount": {
+              "value": 1150000,
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Kim Long",
+              "confidence": 0.8
+            }
+          },
+          {
+            "extraction_id": "X-a3",
+            "attachment_id": "a3",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "receipt",
+              "confidence": 0.9
+            },
+            "total_amount": {
+              "value": 640000,
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Đại lý gạo Thành",
+              "confidence": 0.8
+            }
+          },
+          {
+            "extraction_id": "X-a4",
+            "attachment_id": "a4",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "receipt",
+              "confidence": 0.9
+            },
+            "total_amount": {
+              "value": 2780000,
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Tân Phát",
+              "confidence": 0.8
+            }
+          },
+          {
+            "extraction_id": "X-a5",
+            "attachment_id": "a5",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "receipt",
+              "confidence": 0.9
+            },
+            "total_amount": {
+              "value": 95000,
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Đá viên Hùng",
+              "confidence": 0.8
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          },
+          {
+            "group_key": "G2",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a2"
+            ]
+          },
+          {
+            "group_key": "G3",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a3"
+            ]
+          },
+          {
+            "group_key": "G4",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a4"
+            ]
+          },
+          {
+            "group_key": "G5",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a5"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m2",
+            "role": "date_annotation",
+            "status": "CONFIDENT",
+            "targets": [
+              "G1",
+              "G2",
+              "G3",
+              "G4",
+              "G5"
+            ],
+            "note": "một chú thích áp cho nhiều nhóm"
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G05",
+      "title": "Một hóa đơn chụp thành 2 trang",
+      "tags": [
+        "multi_image",
+        "multi_page"
+      ],
+      "description": "Hai ảnh cùng số hóa đơn, cùng người bán, trang 1/2 và 2/2. Tổng tiền chỉ có ở trang 2. Là một giao dịch.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G05",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T15:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T15:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "ae28f093c59038762c65447e088269e0b715d084db620af011b256eb96cb6b61",
+                "storage_uri": "fixture://G05/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T15:00:30+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T15:00:30+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a2",
+                "kind": "image",
+                "file_name": "a2.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "36e8ad76eefccd26c5325b5e62ba568f4c6357e7fddf883680c2c9f40d6afa7d",
+                "storage_uri": "fixture://G05/a2.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "counterparty_name": {
+              "value": "Công ty TNHH Vật tư Bình An",
+              "confidence": 0.92
+            },
+            "invoice_number": {
+              "value": "0007",
+              "confidence": 0.95
+            },
+            "page": {
+              "value": "1/2",
+              "confidence": 0.9
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": 0.94
+            }
+          },
+          {
+            "extraction_id": "X-a2",
+            "attachment_id": "a2",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "counterparty_name": {
+              "value": "Công ty TNHH Vật tư Bình An",
+              "confidence": 0.92
+            },
+            "invoice_number": {
+              "value": "0007",
+              "confidence": 0.95
+            },
+            "page": {
+              "value": "2/2",
+              "confidence": 0.9
+            },
+            "total_amount": {
+              "value": 18600000,
+              "confidence": 0.96
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1",
+              "m2#a2"
+            ],
+            "note": "gộp trang"
+          }
+        ],
+        "links": [],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G06",
+      "title": "Hai ảnh cùng người bán, không rõ một hay hai hóa đơn",
+      "tags": [
+        "ambiguous",
+        "multi_image",
+        "multi_page"
+      ],
+      "description": "Không có số hóa đơn, không có số trang, chỉ ảnh thứ hai có tổng. Có thể là 2 trang của một hóa đơn hoặc 2 lần mua. Cách chia nhóm là AMBIGUOUS.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G06",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-03T11:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-03T11:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "cee620d512cb33971b21748252cdafb5e78bffca3d8c1b41c008c54dfd749417",
+                "storage_uri": "fixture://G06/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-03T11:00:40+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-03T11:00:40+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a2",
+                "kind": "image",
+                "file_name": "a2.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "a31a6bbe7f6a5168e339d73fe4832d25a6e2cc75504d87f461006be2dd96793a",
+                "storage_uri": "fixture://G06/a2.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "handwritten_receipt",
+              "confidence": 0.8
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Kim Long",
+              "confidence": 0.7
+            }
+          },
+          {
+            "extraction_id": "X-a2",
+            "attachment_id": "a2",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "handwritten_receipt",
+              "confidence": 0.8
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Kim Long",
+              "confidence": 0.7
+            },
+            "total_amount": {
+              "value": 1240000,
+              "confidence": 0.75
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "AMBIGUOUS",
+            "anchor_items": [
+              "m1#a1",
+              "m2#a2"
+            ],
+            "partition_candidates": [
+              [
+                [
+                  "m1#a1",
+                  "m2#a2"
+                ]
+              ],
+              [
+                [
+                  "m1#a1"
+                ],
+                [
+                  "m2#a2"
+                ]
+              ]
+            ]
+          }
+        ],
+        "links": [],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": true
+      }
+    },
+    {
+      "case_id": "G07",
+      "title": "Chứng từ gửi muộn, thuộc kỳ trước",
+      "tags": [
+        "late_document"
+      ],
+      "description": "Gửi ngày 05/10 nhưng hóa đơn ngày 28/09. Gom nhóm vẫn chắc chắn. Ngày hạch toán đề xuất theo ngày chứng từ. Việc báo lệch kỳ là của rule DQ-04, không phải của bước gom.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G07",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-05T08:15:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-05T08:15:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "d2036706ffaba7650e1f2f3438bd063948090c313ece3e724939e9e5277d28af",
+                "storage_uri": "fixture://G07/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-05T08:15:30+07:00",
+            "kind": "text",
+            "text": "hđ gas tuần trước",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-05T08:15:30+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 950000,
+              "confidence": 0.97
+            },
+            "document_date": {
+              "value": "2026-09-28",
+              "confidence": 0.95
+            },
+            "counterparty_name": {
+              "value": "Gas Petrolimex Quận 3",
+              "confidence": 0.9
+            },
+            "description": {
+              "value": "Gas 12kg",
+              "confidence": 0.9
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m2",
+            "role": "caption",
+            "status": "CONFIDENT",
+            "targets": [
+              "G1"
+            ]
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G08",
+      "title": "Doanh thu tự khai 'hôm qua'",
+      "tags": [
+        "relative_date",
+        "self_declared"
+      ],
+      "description": "Tin chữ là nguồn duy nhất. Ngày hạch toán là ngày hôm trước ngày gửi. Đây là số tự khai, không phải chứng từ.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G08",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T09:00:00+07:00",
+            "kind": "text",
+            "text": "Doanh thu hôm qua 7tr2",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1"
+            ]
+          }
+        ],
+        "links": [],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G09",
+      "title": "'Hôm nay' gửi sau nửa đêm, trước giờ chốt ngày",
+      "tags": [
+        "relative_date",
+        "business_day_cutoff"
+      ],
+      "description": "Gửi 00:45 ngày 02/10, giờ chốt 04:00, nên 'hôm nay' là ngày kinh doanh 01/10.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G09",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T00:45:00+07:00",
+            "kind": "text",
+            "text": "Doanh thu hôm nay 12tr5",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T00:45:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1"
+            ]
+          }
+        ],
+        "links": [],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G10",
+      "title": "'Tối qua' gửi lúc 1 giờ 30 sáng",
+      "tags": [
+        "ambiguous",
+        "relative_date",
+        "business_day_cutoff"
+      ],
+      "description": "Gửi 01:30 ngày 02/10, trước giờ chốt nên ngày kinh doanh là 01/10. Người gửi có thể muốn nói tối 01/10 (vừa qua) hoặc tối 30/09. Ngày hạch toán là AMBIGUOUS, số tiền và loại vẫn chắc chắn.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G10",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T01:30:00+07:00",
+            "kind": "text",
+            "text": "Tối qua bán được 6tr",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T01:30:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1"
+            ]
+          }
+        ],
+        "links": [],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": true
+      }
+    },
+    {
+      "case_id": "G11",
+      "title": "Hai người cùng gửi xen kẽ",
+      "tags": [
+        "multi_sender"
+      ],
+      "description": "Chủ hộ gửi ảnh hóa đơn, thu ngân gửi một khoản chi khác ngay sau. Không được gom tin của hai người vào một nhóm khi không có bằng chứng liên quan.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G11",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "7052a81e0e293160ae43664860941310a42ed1f5bc3d3055f51bdc457b8d76ff",
+                "storage_uri": "fixture://G11/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-STAFF",
+            "sent_at": "2026-10-01T10:01:00+07:00",
+            "kind": "text",
+            "text": "chi 500k tiền ship",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:01:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 2000000,
+              "confidence": 0.96
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Tân Phát",
+              "confidence": 0.9
+            },
+            "description": {
+              "value": "Rau",
+              "confidence": 0.8
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          },
+          {
+            "group_key": "G2",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m2"
+            ]
+          }
+        ],
+        "links": [],
+        "unmatched": [],
+        "must_not_auto_link": [
+          {
+            "a": "m2",
+            "b": "G1",
+            "reason": "khác người gửi, số tiền và nội dung không liên quan"
+          }
+        ],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G12",
+      "title": "Tin và ảnh không liên quan xen giữa",
+      "tags": [
+        "noise"
+      ],
+      "description": "Sticker, lời nhắn công việc và ảnh không phải chứng từ không được tạo bản ghi và không được gom vào nhóm.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G12",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "16110a47d1d783511bd01088986f75f109be7412c68849dbcadc5d7aeec65883",
+                "storage_uri": "fixture://G12/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:00:20+07:00",
+            "kind": "text",
+            "text": "nước ngọt nha",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:00:20+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          },
+          {
+            "message_id": "m3",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:01:00+07:00",
+            "kind": "sticker",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:01:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          },
+          {
+            "message_id": "m4",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:02:00+07:00",
+            "kind": "text",
+            "text": "Mai anh qua lấy hàng nhé",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:02:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          },
+          {
+            "message_id": "m5",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:03:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:03:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a2",
+                "kind": "image",
+                "file_name": "a2.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "e564ffd607db7982388830266dee8c3f6676960ce5b635f7dfbcc0a7bed942a0",
+                "storage_uri": "fixture://G12/a2.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 1870000,
+              "confidence": 0.96
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Đại lý nước ngọt Phú",
+              "confidence": 0.9
+            },
+            "description": {
+              "value": "Nước ngọt các loại",
+              "confidence": 0.85
+            }
+          },
+          {
+            "extraction_id": "X-a2",
+            "attachment_id": "a2",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "other",
+              "confidence": 0.9
+            },
+            "description": {
+              "value": "Ảnh mặt tiền quán",
+              "confidence": 0.7
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m2",
+            "role": "caption",
+            "status": "CONFIDENT",
+            "targets": [
+              "G1"
+            ]
+          }
+        ],
+        "unmatched": [
+          {
+            "item": "m3",
+            "status": "UNMATCHED",
+            "reason": "noise",
+            "needs_review": false
+          },
+          {
+            "item": "m4",
+            "status": "UNMATCHED",
+            "reason": "noise",
+            "needs_review": false
+          },
+          {
+            "item": "m5#a2",
+            "status": "UNMATCHED",
+            "reason": "non_document",
+            "needs_review": false
+          }
+        ],
+        "must_not_auto_link": [
+          {
+            "a": "m4",
+            "b": "G1",
+            "reason": "lời nhắn, không phải thông tin giao dịch"
+          },
+          {
+            "a": "m5#a2",
+            "b": "G1",
+            "reason": "ảnh không phải chứng từ"
+          }
+        ],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G13",
+      "title": "Gửi lại đúng file cũ",
+      "tags": [
+        "duplicate"
+      ],
+      "description": "Ảnh ngày 05/10 có cùng sha256 với ảnh ngày 02/10. Là bản trùng chắc chắn, không tạo bản ghi thứ hai.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G13",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T10:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T10:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "d6a8d2af58c3b8fd98d1b400d731ade3389751dee0337f8be9b81ef075d2154d",
+                "storage_uri": "fixture://G13/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-05T08:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-05T08:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a2",
+                "kind": "image",
+                "file_name": "a2.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "d6a8d2af58c3b8fd98d1b400d731ade3389751dee0337f8be9b81ef075d2154d",
+                "storage_uri": "fixture://G13/a2.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 950000,
+              "confidence": 0.97
+            },
+            "document_date": {
+              "value": "2026-10-02",
+              "confidence": 0.95
+            },
+            "counterparty_name": {
+              "value": "Gas Petrolimex Quận 3",
+              "confidence": 0.9
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m2#a2",
+            "role": "duplicate_of",
+            "status": "CONFIDENT",
+            "targets": [
+              "G1"
+            ],
+            "note": "cùng sha256"
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G14",
+      "title": "Chụp lại cùng một phiếu (gần trùng)",
+      "tags": [
+        "duplicate",
+        "ambiguous"
+      ],
+      "description": "Hai ảnh khác nhau nhưng cùng người bán, cùng ngày, cùng số tiền, không có số hóa đơn. Có thể là chụp lại hoặc hai lần mua giống nhau. Không được tự loại trùng.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G14",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T10:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T10:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "590eca6af2cca95639da82e13886238b697c42888d717a0d5cec6be67832d411",
+                "storage_uri": "fixture://G14/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-03T09:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-03T09:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a2",
+                "kind": "image",
+                "file_name": "a2.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "b438d5fb74573ca77a32e94b723d538ef6870aceb2dbb49650e61d0b46e9ccc7",
+                "storage_uri": "fixture://G14/a2.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "handwritten_receipt",
+              "confidence": 0.85
+            },
+            "total_amount": {
+              "value": 1500000,
+              "confidence": 0.9
+            },
+            "document_date": {
+              "value": "2026-10-02",
+              "confidence": 0.85
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Kim Long",
+              "confidence": 0.8
+            }
+          },
+          {
+            "extraction_id": "X-a2",
+            "attachment_id": "a2",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "handwritten_receipt",
+              "confidence": 0.85
+            },
+            "total_amount": {
+              "value": 1500000,
+              "confidence": 0.9
+            },
+            "document_date": {
+              "value": "2026-10-02",
+              "confidence": 0.85
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Kim Long",
+              "confidence": 0.8
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m2#a2",
+            "role": "duplicate_of",
+            "status": "AMBIGUOUS",
+            "candidates": [
+              "G1",
+              "NONE"
+            ],
+            "note": "NONE nghĩa là giao dịch riêng"
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": true
+      }
+    },
+    {
+      "case_id": "G15",
+      "title": "Một tin chứa cả thu và chi",
+      "tags": [
+        "multi_amount",
+        "self_declared"
+      ],
+      "description": "Tách thành hai nhóm từ cùng một tin, mỗi nhóm một đoạn. Cả hai bản ghi trỏ về cùng tin làm bằng chứng.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G15",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T21:00:00+07:00",
+            "kind": "text",
+            "text": "Hôm nay bán 8tr4, nhập hàng 3tr",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T21:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1"
+            ],
+            "segment": "bán 8tr4"
+          },
+          {
+            "group_key": "G2",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1"
+            ],
+            "segment": "nhập hàng 3tr"
+          }
+        ],
+        "links": [],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G16",
+      "title": "Khách tự đính chính số đã gửi",
+      "tags": [
+        "correction",
+        "relative_date"
+      ],
+      "description": "Tin sửa không ghi đè bản ghi cũ. Bản ghi mới thay thế bản cũ, bản cũ giữ lại với trạng thái SUPERSEDED. Mọi đính chính đều phải chờ duyệt.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G16",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T21:00:00+07:00",
+            "kind": "text",
+            "text": "Doanh thu hôm nay 8tr",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T21:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-02T08:30:00+07:00",
+            "kind": "text",
+            "text": "Sửa lại: doanh thu hôm qua 9tr chứ không phải 8tr",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-02T08:30:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1"
+            ]
+          },
+          {
+            "group_key": "G2",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m2"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m2",
+            "role": "correction",
+            "status": "CONFIDENT",
+            "targets": [
+              "G1"
+            ],
+            "note": "G2 thay thế G1"
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": true
+      }
+    },
+    {
+      "case_id": "G17",
+      "title": "Ảnh chuyển khoản và hóa đơn cùng một khoản chi",
+      "tags": [
+        "transfer_and_invoice",
+        "multi_image"
+      ],
+      "description": "Hai chứng từ của cùng một giao dịch kinh tế. Bước gom tạo hai bản ghi riêng, không gộp. Quan hệ giữa chúng là việc của MATCH, nên kỳ vọng có một MATCH đề xuất kèm bằng chứng. Sổ theo ngày không được cộng khoản chi này hai lần.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G17",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T14:20:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T14:20:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "9412a1591ac54b29d361d90b550dbc52dce66f8dc07b3d10fd45254aa8837a89",
+                "storage_uri": "fixture://G17/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T14:22:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T14:22:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a2",
+                "kind": "image",
+                "file_name": "a2.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "fead9757b07bb4017901e5921e76682b63d3b33ab0939c6cbe5db62d72bfa2a3",
+                "storage_uri": "fixture://G17/a2.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "bank_transfer",
+              "confidence": 0.95
+            },
+            "direction": {
+              "value": "outgoing",
+              "confidence": 0.97
+            },
+            "total_amount": {
+              "value": 3200000,
+              "confidence": 0.98
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": 0.97
+            },
+            "transfer_note": {
+              "value": "TT HD 0451",
+              "confidence": 0.9
+            },
+            "counterparty_name": {
+              "value": "NGUYEN VAN TAN",
+              "confidence": 0.9
+            }
+          },
+          {
+            "extraction_id": "X-a2",
+            "attachment_id": "a2",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 3200000,
+              "confidence": 0.96
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": 0.93
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Tân Phát",
+              "confidence": 0.9
+            },
+            "invoice_number": {
+              "value": "0451",
+              "confidence": 0.92
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          },
+          {
+            "group_key": "G2",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m2#a2"
+            ]
+          }
+        ],
+        "links": [],
+        "unmatched": [],
+        "must_not_auto_link": [
+          {
+            "a": "G1",
+            "b": "G2",
+            "reason": "hai chứng từ khác loại, nối bằng MATCH chứ không gộp nhóm"
+          }
+        ],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G18",
+      "title": "Số tiền gõ tay mâu thuẫn với OCR",
+      "tags": [
+        "multi_amount",
+        "conflict"
+      ],
+      "description": "Chỉ có một ảnh nên gom nhóm chắc chắn, nhưng 2.500.000 khác 2.350.000 OCR đọc rất chắc. Nhóm có độ tin cậy cao, số tiền thì không. Đây là lý do confidence phải tính cho từng quyết định.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G18",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "97b6365eb653f3a87c7945fa5b4e1379abc58b1d98ab627d63eb0d4bcbdbef90",
+                "storage_uri": "fixture://G18/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:00:20+07:00",
+            "kind": "text",
+            "text": "2tr5",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:00:20+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "invoice",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 2350000,
+              "confidence": 0.97
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": 0.95
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng thực phẩm Hòa",
+              "confidence": 0.9
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m2",
+            "role": "amount_annotation",
+            "status": "CONFIDENT",
+            "targets": [
+              "G1"
+            ],
+            "note": "liên kết chắc, giá trị mâu thuẫn"
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": true
+      }
+    },
+    {
+      "case_id": "G19",
+      "title": "Ảnh chuyển khoản + nội dung",
+      "tags": [
+        "happy_path",
+        "transfer"
+      ],
+      "description": "Ví dụ trong tài liệu V1: chuyển khoản 5.000.000đ, chú thích 'Tiền mua nguyên liệu'.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G19",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T14:20:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T14:20:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "e3306e63f805716ad3884adfd1491bf5191c93e1ef25dbf198e74bebde2c8788",
+                "storage_uri": "fixture://G19/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T14:21:00+07:00",
+            "kind": "text",
+            "text": "Tiền mua nguyên liệu",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T14:21:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "bank_transfer",
+              "confidence": 0.95
+            },
+            "direction": {
+              "value": "outgoing",
+              "confidence": 0.97
+            },
+            "total_amount": {
+              "value": 5000000,
+              "confidence": 0.98
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": 0.97
+            },
+            "counterparty_name": {
+              "value": "TRAN THI B",
+              "confidence": 0.9
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "item": "m2",
+            "role": "caption",
+            "status": "CONFIDENT",
+            "targets": [
+              "G1"
+            ]
+          }
+        ],
+        "unmatched": [],
+        "must_not_auto_link": [],
+        "requires_human_review": false
+      }
+    },
+    {
+      "case_id": "G20",
+      "title": "Chú thích cách ảnh nhiều giờ",
+      "tags": [
+        "time_window",
+        "unmatched"
+      ],
+      "description": "'tiền điện tháng này' gửi sau 5 giờ, không có số tiền, nội dung không khớp ảnh trước. Không gom, nhưng phải hiện ra cho kế toán xem vì có thể là một khoản chi thiếu chứng từ.",
+      "input": {
+        "schema_version": "1.0",
+        "dataset_id": "spec-G20",
+        "customer": {
+          "customer_id": "CUS-001",
+          "name": "Quán ăn Minh Anh",
+          "timezone": "Asia/Ho_Chi_Minh",
+          "business_day_cutoff": "04:00"
+        },
+        "senders": [
+          {
+            "sender_id": "S-OWNER",
+            "display_name": "Chị Minh Anh",
+            "role": "owner",
+            "linked_customer_id": "CUS-001"
+          },
+          {
+            "sender_id": "S-STAFF",
+            "display_name": "Tuấn (thu ngân)",
+            "role": "staff",
+            "linked_customer_id": "CUS-001"
+          }
+        ],
+        "messages": [
+          {
+            "message_id": "m1",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T10:00:00+07:00",
+            "kind": "image",
+            "text": null,
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T10:00:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            },
+            "attachments": [
+              {
+                "attachment_id": "a1",
+                "kind": "image",
+                "file_name": "a1.jpg",
+                "mime_type": "image/jpeg",
+                "size_bytes": 180000,
+                "sha256": "d728e3bfdb13f9458ecd3b05095c5f0737cf9be3f15245d1cb1eee25f15fb0ef",
+                "storage_uri": "fixture://G20/a1.jpg",
+                "width": 1080,
+                "height": 1440
+              }
+            ]
+          },
+          {
+            "message_id": "m2",
+            "customer_id": "CUS-001",
+            "conversation_id": "CONV-OA-CUS-001",
+            "sender_id": "S-OWNER",
+            "sent_at": "2026-10-01T15:10:00+07:00",
+            "kind": "text",
+            "text": "tiền điện tháng này",
+            "provenance": {
+              "source": "synthetic",
+              "source_message_id": null,
+              "received_at": "2026-10-01T15:10:00+07:00",
+              "collected_by": "spec-fixture",
+              "raw_payload": null,
+              "raw_payload_sha256": null
+            }
+          }
+        ],
+        "extractions": [
+          {
+            "extraction_id": "X-a1",
+            "attachment_id": "a1",
+            "engine": "fixture",
+            "doc_type": {
+              "value": "receipt",
+              "confidence": 0.95
+            },
+            "total_amount": {
+              "value": 1100000,
+              "confidence": 0.95
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": 0.9
+            },
+            "counterparty_name": {
+              "value": "Cửa hàng Kim Long",
+              "confidence": 0.85
+            },
+            "description": {
+              "value": "Hàng tạp hóa",
+              "confidence": 0.8
+            }
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "group_key": "G1",
+            "status": "CONFIDENT",
+            "anchor_items": [
+              "m1#a1"
+            ]
+          }
+        ],
+        "links": [],
+        "unmatched": [
+          {
+            "item": "m2",
+            "status": "UNMATCHED",
+            "reason": "no_anchor_in_window",
+            "needs_review": true
+          }
+        ],
+        "must_not_auto_link": [
+          {
+            "a": "m2",
+            "b": "G1",
+            "reason": "ngoài khung thời gian và nội dung không khớp"
+          }
+        ],
+        "requires_human_review": true
+      }
+    }
+  ]
+}

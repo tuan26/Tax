@@ -1,0 +1,1532 @@
+{
+  "suite": "records_expected",
+  "suite_version": "1.0",
+  "depends_on": "grouping_cases.json",
+  "description": "Kết quả mong đợi sau khi chuẩn hóa (MESSAGE_GROUP → RECORD), cùng case_id với grouping_cases.json. Confidence được chấm cho từng quyết định suy luận, không chỉ cho trường OCR, để một số tiền đọc rất chắc không làm cả giao dịch trông chắc theo.",
+  "confidence_bands": {
+    "HIGH": "confidence ≥ 0.90",
+    "MEDIUM": "0.60 ≤ confidence < 0.90",
+    "LOW": "confidence < 0.60",
+    "NONE": "không có giá trị (value = null)"
+  },
+  "conventions": {
+    "decisions": "Mỗi quyết định có value và danh sách band được chấp nhận. value = null nghĩa là hệ thống không được tự chọn; candidates liệt kê các giá trị cần đưa cho kế toán.",
+    "review_required": "true khi message_group, transaction_type, amount hoặc posting_date không đạt HIGH hay có value null, hoặc khi bản ghi là đính chính. document_date = null không bắt buộc duyệt vì nhiều chứng từ và số tự khai vốn không có ngày. null ở trường này nghĩa là ca không kiểm tra cờ đó.",
+    "sent_date": "Ngày gửi theo giờ địa phương, tất định, không có confidence.",
+    "posting_date": "Ngày hạch toán đề xuất, đã áp giờ chốt ngày kinh doanh.",
+    "evidence_kind": "document | bank_transfer_screenshot | self_declared. self_declared là số tự khai, không phải chứng từ (nguyên tắc G6).",
+    "record_count": "Số nguyên, hoặc {min, max} khi cách chia nhóm là AMBIGUOUS.",
+    "constraints": "Điều kiện áp cho mọi bản ghi sinh ra từ các item đã nêu, dùng khi không thể cố định bản ghi.",
+    "expected_matches": "MATCH đề xuất kèm bằng chứng từng tiêu chí, dùng để hiển thị lý do ghép cho kế toán."
+  },
+  "cases": [
+    {
+      "case_id": "G01",
+      "title": "Ảnh hóa đơn + số tiền + chú thích",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1",
+            "m2",
+            "m3"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 2350000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false,
+          "description_contains": "thịt"
+        }
+      ]
+    },
+    {
+      "case_id": "G02",
+      "title": "Hai ảnh không đọc được tổng, số tiền và chú thích không rõ thuộc ảnh nào",
+      "record_count": 2,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH",
+                "MEDIUM"
+              ]
+            },
+            "amount": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ],
+              "candidates": [
+                2500000
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ],
+              "candidates": [
+                "2026-10-01",
+                "2026-10-02"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": true,
+          "review_reasons": [
+            "amount_unresolved",
+            "posting_date_ambiguous",
+            "caption_ambiguous"
+          ]
+        },
+        {
+          "record_key": "R2",
+          "from_groups": [
+            "G2"
+          ],
+          "evidence_items": [
+            "m2#a2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH",
+                "MEDIUM"
+              ]
+            },
+            "amount": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ],
+              "candidates": [
+                2500000
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ],
+              "candidates": [
+                "2026-10-01",
+                "2026-10-02"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": true,
+          "review_reasons": [
+            "amount_unresolved",
+            "posting_date_ambiguous",
+            "caption_ambiguous"
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "G03",
+      "title": "Hai ảnh, số tiền và chú thích được phân giải bằng bằng chứng OCR",
+      "record_count": 2,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 2350000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false
+        },
+        {
+          "record_key": "R2",
+          "from_groups": [
+            "G2"
+          ],
+          "evidence_items": [
+            "m2#a2",
+            "m3",
+            "m4"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 2500000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false,
+          "description_contains": "thịt"
+        }
+      ]
+    },
+    {
+      "case_id": "G04",
+      "title": "Album 5 ảnh + một chú thích ngày cho cả album",
+      "record_count": 5,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1",
+            "m2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 320000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": false
+        },
+        {
+          "record_key": "R2",
+          "from_groups": [
+            "G2"
+          ],
+          "evidence_items": [
+            "m1#a2",
+            "m2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 1150000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": false
+        },
+        {
+          "record_key": "R3",
+          "from_groups": [
+            "G3"
+          ],
+          "evidence_items": [
+            "m1#a3",
+            "m2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 640000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": false
+        },
+        {
+          "record_key": "R4",
+          "from_groups": [
+            "G4"
+          ],
+          "evidence_items": [
+            "m1#a4",
+            "m2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 2780000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": false
+        },
+        {
+          "record_key": "R5",
+          "from_groups": [
+            "G5"
+          ],
+          "evidence_items": [
+            "m1#a5",
+            "m2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 95000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": false
+        }
+      ]
+    },
+    {
+      "case_id": "G05",
+      "title": "Một hóa đơn chụp thành 2 trang",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1",
+            "m2#a2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 18600000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false
+        }
+      ]
+    },
+    {
+      "case_id": "G06",
+      "title": "Hai ảnh cùng người bán, không rõ một hay hai hóa đơn",
+      "record_count": {
+        "min": 1,
+        "max": 2
+      },
+      "records": [],
+      "constraints": [
+        {
+          "items": [
+            "m1#a1",
+            "m2#a2"
+          ],
+          "review_required": true,
+          "note": "mọi bản ghi sinh từ hai ảnh này phải chờ duyệt"
+        }
+      ]
+    },
+    {
+      "case_id": "G07",
+      "title": "Chứng từ gửi muộn, thuộc kỳ trước",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1",
+            "m2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 950000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-09-28",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-09-28",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-05",
+          "review_required": false,
+          "description_contains": "gas"
+        }
+      ]
+    },
+    {
+      "case_id": "G08",
+      "title": "Doanh thu tự khai 'hôm qua'",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1"
+          ],
+          "evidence_kind": "self_declared",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "INCOME",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 7200000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": false
+        }
+      ]
+    },
+    {
+      "case_id": "G09",
+      "title": "'Hôm nay' gửi sau nửa đêm, trước giờ chốt ngày",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1"
+          ],
+          "evidence_kind": "self_declared",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "INCOME",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 12500000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": false
+        }
+      ]
+    },
+    {
+      "case_id": "G10",
+      "title": "'Tối qua' gửi lúc 1 giờ 30 sáng",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1"
+          ],
+          "evidence_kind": "self_declared",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "INCOME",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 6000000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ],
+              "candidates": [
+                "2026-09-30",
+                "2026-10-01"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": true,
+          "review_reasons": [
+            "posting_date_ambiguous"
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "G11",
+      "title": "Hai người cùng gửi xen kẽ",
+      "record_count": 2,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 2000000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false
+        },
+        {
+          "record_key": "R2",
+          "from_groups": [
+            "G2"
+          ],
+          "evidence_items": [
+            "m2"
+          ],
+          "evidence_kind": "self_declared",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 500000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false,
+          "description_contains": "ship"
+        }
+      ]
+    },
+    {
+      "case_id": "G12",
+      "title": "Tin và ảnh không liên quan xen giữa",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1",
+            "m2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 1870000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false,
+          "description_contains": "nước ngọt"
+        }
+      ]
+    },
+    {
+      "case_id": "G13",
+      "title": "Gửi lại đúng file cũ",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1",
+            "m2#a2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 950000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": false
+        }
+      ]
+    },
+    {
+      "case_id": "G14",
+      "title": "Chụp lại cùng một phiếu (gần trùng)",
+      "record_count": {
+        "min": 1,
+        "max": 2
+      },
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH",
+                "MEDIUM"
+              ]
+            },
+            "amount": {
+              "value": 1500000,
+              "confidence": [
+                "HIGH",
+                "MEDIUM"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH",
+                "MEDIUM"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-02",
+              "confidence": [
+                "HIGH",
+                "MEDIUM"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": null
+        }
+      ],
+      "constraints": [
+        {
+          "items": [
+            "m2#a2"
+          ],
+          "review_required": true,
+          "note": "nếu tạo bản ghi từ ảnh thứ hai thì bản ghi đó phải chờ duyệt"
+        }
+      ]
+    },
+    {
+      "case_id": "G15",
+      "title": "Một tin chứa cả thu và chi",
+      "record_count": 2,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1"
+          ],
+          "evidence_kind": "self_declared",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "INCOME",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 8400000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false
+        },
+        {
+          "record_key": "R2",
+          "from_groups": [
+            "G2"
+          ],
+          "evidence_items": [
+            "m1"
+          ],
+          "evidence_kind": "self_declared",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 3000000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false
+        }
+      ]
+    },
+    {
+      "case_id": "G16",
+      "title": "Khách tự đính chính số đã gửi",
+      "record_count": 2,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1"
+          ],
+          "evidence_kind": "self_declared",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "INCOME",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 8000000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false,
+          "status": "SUPERSEDED"
+        },
+        {
+          "record_key": "R2",
+          "from_groups": [
+            "G2"
+          ],
+          "evidence_items": [
+            "m2"
+          ],
+          "evidence_kind": "self_declared",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "INCOME",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 9000000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-02",
+          "review_required": true,
+          "review_reasons": [
+            "correction"
+          ],
+          "supersedes": "R1"
+        }
+      ]
+    },
+    {
+      "case_id": "G17",
+      "title": "Ảnh chuyển khoản và hóa đơn cùng một khoản chi",
+      "record_count": 2,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1"
+          ],
+          "evidence_kind": "bank_transfer_screenshot",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 3200000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false
+        },
+        {
+          "record_key": "R2",
+          "from_groups": [
+            "G2"
+          ],
+          "evidence_items": [
+            "m2#a2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 3200000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false
+        }
+      ],
+      "expected_matches": [
+        {
+          "left": "R1",
+          "right": "R2",
+          "match_type": "transfer_invoice",
+          "status": "SUGGESTED",
+          "evidence": [
+            {
+              "kind": "amount_equal",
+              "detail": "3.200.000đ = 3.200.000đ"
+            },
+            {
+              "kind": "date_gap",
+              "detail": "cùng ngày, cách 2 phút"
+            },
+            {
+              "kind": "invoice_number_in_transfer_note",
+              "detail": "'TT HD 0451' chứa số hóa đơn 0451"
+            },
+            {
+              "kind": "counterparty_unverified",
+              "detail": "tên người nhận chuyển khoản khác tên cửa hàng trên hóa đơn"
+            }
+          ],
+          "note": "Trạng thái đề xuất. Chỉ kế toán mới xác nhận."
+        }
+      ]
+    },
+    {
+      "case_id": "G18",
+      "title": "Số tiền gõ tay mâu thuẫn với OCR",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1",
+            "m2"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": null,
+              "confidence": [
+                "NONE"
+              ],
+              "candidates": [
+                2350000,
+                2500000
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": true,
+          "review_reasons": [
+            "amount_conflict"
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "G19",
+      "title": "Ảnh chuyển khoản + nội dung",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1",
+            "m2"
+          ],
+          "evidence_kind": "bank_transfer_screenshot",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 5000000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false,
+          "description_contains": "nguyên liệu"
+        }
+      ]
+    },
+    {
+      "case_id": "G20",
+      "title": "Chú thích cách ảnh nhiều giờ",
+      "record_count": 1,
+      "records": [
+        {
+          "record_key": "R1",
+          "from_groups": [
+            "G1"
+          ],
+          "evidence_items": [
+            "m1#a1"
+          ],
+          "evidence_kind": "document",
+          "decisions": {
+            "message_group": {
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "transaction_type": {
+              "value": "EXPENSE",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "amount": {
+              "value": 1100000,
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "document_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            },
+            "posting_date": {
+              "value": "2026-10-01",
+              "confidence": [
+                "HIGH"
+              ]
+            }
+          },
+          "sent_date": "2026-10-01",
+          "review_required": false
+        }
+      ]
+    }
+  ]
+}

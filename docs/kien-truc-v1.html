@@ -533,6 +533,7 @@ erDiagram
     float date_score
     float party_score
     float content_score
+    json evidence
     float confidence
     string status
   }
@@ -550,7 +551,7 @@ erDiagram
     string kind
     json fields_ai
     json fields_confirmed
-    float confidence
+    json decision_confidence
     date sent_date
     date document_date
     date posting_date
@@ -575,6 +576,16 @@ erDiagram
     datetime requested_at
   }
 </pre>
+  <p><code>RECORD.decision_confidence</code> lưu độ tin cậy cho từng quyết định suy luận: gom nhóm, loại thu chi, số tiền, ngày chứng từ, ngày hạch toán. Số tiền OCR đọc chắc 0,99 không làm cả giao dịch trông chắc khi việc gom nhóm chỉ đạt 0,54.</p>
+  <p><code>MATCH.evidence</code> lưu từng tiêu chí đã đối chiếu (số tiền, khoảng cách ngày, người bán, nội dung) và kết quả của nó, để giao diện giải thích lý do ghép bằng bằng chứng thay vì một con số phần trăm.</p>
+  <div class="chat" style="max-width:520px">
+    <b>Đề xuất ghép</b>
+    <div>✓ Cùng số tiền: 5.000.000đ</div>
+    <div>✓ Cách nhau 1 ngày</div>
+    <div>✓ Nội dung đều liên quan "mua nguyên liệu"</div>
+    <div>? Chưa xác định được nhà cung cấp</div>
+    <div class="status"><span class="chip ok">Xác nhận ghép</span><span class="chip">Không phải</span></div>
+  </div>
   <p><code>MATCH.status</code> có 4 giá trị: tự ghép, đề xuất, đã xác nhận, bị bác bỏ. Trong V1, mọi MATCH dùng để đóng phát hiện đều phải được kế toán xác nhận.</p>
   </div>
 </section>
@@ -627,6 +638,7 @@ erDiagram
         <tr><td><span class="mono">G4</span></td><td>AI không tạo phát hiện, không tính thuế</td><td>Kết quả AI chứa trường phát hiện hay số thuế → bị loại bỏ, ghi log</td></tr>
         <tr><td><span class="mono">G5</span></td><td>Dữ liệu chưa ẩn không ra nước ngoài</td><td>Payload còn thông tin nhạy cảm, hoặc cờ đã ẩn bằng false → lệnh gọi AI nước ngoài bị chặn</td></tr>
         <tr><td><span class="mono">G6</span></td><td>Doanh thu tự khai không phải chứng từ</td><td>Bản ghi từ tin nhắn tự khai không thể làm bằng chứng để đóng phát hiện</td></tr>
+        <tr><td><span class="mono">G8</span></td><td>Độ tin cậy tính cho từng quyết định, không gộp thành một số</td><td>Bản ghi có số tiền HIGH nhưng gom nhóm LOW → vẫn vào hàng đợi duyệt, không được tự xác nhận</td></tr>
         <tr><td><span class="mono">G7</span></td><td>Mọi sửa đổi có audit log, không xóa cứng</td><td>Mỗi lần sửa RECORD, MATCH, FINDING sinh đúng một dòng audit; lệnh DELETE bị chặn</td></tr>
       </tbody>
     </table>
@@ -671,6 +683,23 @@ erDiagram
     </div>
   </div>
   <p>Định giá theo số hộ (ví dụ các gói đến 20, 100, 500 hộ) dễ hiểu với kế toán hơn tính theo số trang OCR. Giá phải kiểm chứng ngay ở giai đoạn 0, vì phí dịch vụ kế toán cho hộ thường thấp.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Đặc tả chạy được</div>
+  <h2>Bộ đặc tả đầu tiên của V1: tin nhắn và gom nhóm</h2>
+  <p>Có trước FastAPI, PostgreSQL và webhook Zalo. Mọi phương án gom tin, OCR hay AI đều được chấm trên cùng bộ dữ liệu này.</p>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>File</th><th>Nội dung</th></tr></thead>
+      <tbody>
+        <tr><td><code>spec/messages.schema.json</code></td><td>Contract đầu vào độc lập với Zalo. Tin nhắn gốc chỉ được thêm, không sửa, có provenance và payload gốc. Kết quả OCR nằm riêng ở <code>extractions</code>, ghi rõ engine sinh ra</td></tr>
+        <tr><td><code>spec/grouping_cases.json</code></td><td>20 ca test kiểm tra tầng MESSAGE → MESSAGE_GROUP: ca chuẩn, ca mơ hồ, gửi muộn, nhiều ảnh liên tiếp, nhiều số tiền, hôm qua và tối qua, hai người cùng gửi, tin không liên quan, gửi lại. Kỳ vọng dùng CONFIDENT, AMBIGUOUS, UNMATCHED và danh sách cặp không bao giờ được tự gom</td></tr>
+        <tr><td><code>spec/records.expected.json</code></td><td>Kiểm tra tầng MESSAGE_GROUP → RECORD với độ tin cậy cho từng quyết định, số ứng viên khi không được tự chọn, và MATCH đề xuất kèm bằng chứng</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Chỉ số an toàn chính là tỷ lệ tự ghép sai, ngưỡng tối đa 2%, và không được vi phạm cặp cấm nào. Tự quyết ở một ca kỳ vọng AMBIGUOUS bị tính là ghép sai, kể cả khi đoán trúng. Chấp nhận khoảng 15% vào hàng đợi duyệt để giữ tỷ lệ này thấp.</p>
 </section>
 
 <section>
@@ -737,7 +766,7 @@ erDiagram
     <li><span>Tìm 3–5 kế toán đồng ý phỏng vấn, trong đó 2 người cho ngồi cạnh khi xử lý một hộ thật.</span></li>
     <li><span>Chuẩn bị mẫu ghi baseline: số tin nhắn, ảnh, chuyển khoản, số phút từng khâu, các câu hỏi lại khách.</span></li>
     <li><span>Đăng ký Zalo OA thử nghiệm để bắt đầu spike A song song.</span></li>
-    <li><span>Viết định dạng <code>messages.json</code> và bộ ca gom tin khó thành test, để prototype offline sẵn sàng khi có dữ liệu.</span></li>
+    <li><span>Đã xong: contract <code>messages.schema.json</code> và 20 ca test gom tin. Tiếp theo: bổ sung ca từ dữ liệu thật ở giai đoạn 0, viết bộ chấm điểm.</span></li>
   </ol>
 </section>
 
