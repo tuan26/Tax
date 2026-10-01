@@ -173,38 +173,86 @@ td.ex { color: var(--muted); font-style: italic; }
   <h1>Kiểm tra hồ sơ thuế hộ kinh doanh — V1</h1>
   <p class="lead">Công cụ cho kế toán dịch vụ. Hộ kinh doanh gửi ảnh hóa đơn, ảnh chuyển khoản và tin nhắn doanh thu qua Zalo. Hệ thống đọc, gom theo đúng ngày phát sinh, phân loại thu chi, rồi chỉ ra chỗ thiếu hoặc chưa khớp kèm bằng chứng. Kế toán là người xác nhận mọi thứ.</p>
   <div class="status">
-    <span class="chip ok">4 quyết định đã chốt</span>
-    <span class="chip warn">9 câu hỏi mới về Zalo và AI</span>
-    <span class="chip info">Chưa viết code</span>
+    <span class="chip ok">Phạm vi V1 đã đóng băng</span>
+    <span class="chip warn">3 giả định sống còn chưa kiểm chứng</span>
+    <span class="chip info">Chưa viết code production</span>
   </div>
 </header>
 
 <section>
+  <div class="eyebrow">Trước khi build</div>
+  <h2>Ba giả định phải chứng minh trước khi đầu tư vào V1</h2>
+  <p>Hybrid AI, rule engine hay chọn stack đều giải quyết được về sau. Ba điều dưới đây mới quyết định có người trả tiền hay không. Mỗi giả định có tiêu chí đạt và phương án dự phòng định sẵn, để kết quả spike dẫn thẳng tới quyết định.</p>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Giả định</th><th>Cách kiểm chứng</th><th>Đạt khi</th><th>Nếu không đạt</th></tr></thead>
+      <tbody>
+        <tr><td><b>A · Zalo lấy được dữ liệu cần thiết</b></td><td>Spike Zalo OA: gửi ảnh, tin chữ, nhiều ảnh một lúc, trong chat 1-1 và trong nhóm</td><td>Webhook nhận đủ người gửi, thời gian, chữ, ảnh; tải được file gốc; gán đúng hộ</td><td>Chủ hộ forward sang OA, hoặc kế toán kéo thả từ Zalo PC. Khi đó lời hứa "không đổi thói quen" phải viết lại</td></tr>
+        <tr><td><b>B · Gom tin và đọc ảnh đủ tốt trên dữ liệu thật</b></td><td>Prototype offline trên 1–2 tháng dữ liệu thật của 2 hộ (200–500 ảnh)</td><td>Kế toán sửa ít hơn 1/5 số giao dịch; gom nhóm đúng trên 85% (ngưỡng sẽ chỉnh sau khi có baseline)</td><td>Thêm bước kế toán xác nhận nhóm trước khi đọc, hoặc thu hẹp loại chứng từ hỗ trợ</td></tr>
+        <tr><td><b>C · Tiết kiệm đủ thời gian</b></td><td>Đo baseline khi ngồi cạnh kế toán, rồi đo lại với prototype trên cùng dữ liệu</td><td>Giảm ít nhất 60% số phút làm thủ công cho mỗi hộ mỗi kỳ, không bỏ sót thêm lỗi</td><td>Dừng, hoặc đổi sang khâu tốn thời gian nhất mà phần đo baseline chỉ ra</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
   <div class="eyebrow">Đã chốt</div>
-  <h2>Bốn quyết định định hướng V1</h2>
+  <h2>Các quyết định định hướng V1</h2>
   <div class="decided">
     <div><span class="k">Q12 · Nguồn dữ liệu</span><b>Zalo là cửa vào chính</b><p>Hỗ trợ đủ 3 cách nhưng làm theo thứ tự: Zalo ở V1, upload XML/Excel ở V1.1, tự đồng bộ cổng hóa đơn ở V2 nếu điều kiện kỹ thuật và bảo mật cho phép.</p></div>
-    <div><span class="k">Q17 · AI</span><b>Hybrid</b><p>OCR và phát hiện, ẩn thông tin nhạy cảm chạy trong nước. Chỉ dữ liệu cần thiết, đã ẩn danh, mới được gửi tới AI nước ngoài để phân loại nâng cao.</p></div>
+    <div><span class="k">Q17 · AI</span><b>Hybrid: giữ trong thiết kế, chưa build</b><p>Đích đến vẫn là OCR và ẩn thông tin nhạy cảm trong nước. Prototype chạy trên bộ dữ liệu đã được đồng ý hoặc đã ẩn danh thủ công. Chỉ build pipeline hybrid khi có ý kiến pháp lý (Q36).</p></div>
     <div><span class="k">Q7 · Q9 · Ngành</span><b>Chờ design partner</b><p>Chọn ngành theo tập khách của 2–3 kế toán thử nghiệm. Rule nguồn gốc hàng hóa chỉ làm nếu ngành chính là thương mại.</p></div>
     <div><span class="k">Q24 · Stack</span><b>Python FastAPI, PostgreSQL, Next.js</b><p>Backend Python để xử lý OCR, parse và AI. Web cho kế toán dùng Next.js.</p></div>
   </div>
 </section>
 
 <section>
-  <div class="eyebrow">Phạm vi theo giai đoạn</div>
-  <h2>V1 tập trung vào hộp thư Zalo</h2>
+  <div class="eyebrow">Phạm vi V1 đã đóng băng</div>
+  <h2>Chỉ dữ liệu Zalo, chỉ rule chất lượng dữ liệu</h2>
+  <div class="scope">
+    <div class="in">
+      <h3>Trong V1</h3>
+      <ul>
+        <li>Nhận ảnh và tin nhắn qua Zalo</li>
+        <li>Gom tin nhắn thành giao dịch</li>
+        <li>OCR, đọc số tiền và ngày</li>
+        <li>Sổ thu chi theo ngày</li>
+        <li>Kế toán sửa và xác nhận</li>
+        <li>4–6 rule chất lượng dữ liệu, mỗi phát hiện kèm bằng chứng</li>
+        <li>Vòng khép kín: yêu cầu khách bổ sung → nhận chứng từ → ghép → kế toán xác nhận đã giải quyết</li>
+        <li>Audit log</li>
+      </ul>
+    </div>
+    <div class="out">
+      <h3>Ngoài V1</h3>
+      <ul>
+        <li>XML hóa đơn điện tử, POS, sao kê ngân hàng (V1.1)</li>
+        <li>Đồng bộ cổng hóa đơn, kho hàng, rule thuế (V2)</li>
+        <li>Pipeline hybrid AI đầy đủ (khi có ý kiến pháp lý)</li>
+        <li>Tính thuế, tờ khai, eTax, hạch toán tự động</li>
+        <li>Chatbot thuế, dashboard phức tạp</li>
+        <li>Mọi ô nhập số thuế, tỷ suất hay mức chi phí mong muốn, ở mọi phiên bản</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Lộ trình</div>
+  <h2>Kiểm chứng trước, nối Zalo thật sau</h2>
   <div class="tbl-scroll">
     <table class="phase">
-      <thead><tr><th>Giai đoạn</th><th>Làm gì</th><th>Điều kiện để chuyển sang giai đoạn sau</th></tr></thead>
+      <thead><tr><th>Giai đoạn</th><th>Làm gì</th><th>Kết quả cần có</th></tr></thead>
       <tbody>
-        <tr><td><span class="chip ok">V1</span></td><td>Zalo OA nhận ảnh và tin nhắn → OCR trong nước → ẩn thông tin nhạy cảm → AI phân loại → gom theo ngày → kế toán xác nhận → rule cơ bản → tin nhắn đòi chứng từ</td><td>2 văn phòng xử lý trọn một kỳ thật; kế toán xác nhận nhanh hơn cách làm hiện tại</td></tr>
-        <tr><td><span class="chip">V1.1</span></td><td>Upload XML/Excel hóa đơn điện tử, sao kê ngân hàng, Excel POS; rule đối chiếu doanh thu với hóa đơn</td><td>Parser cho 3 ngân hàng phổ biến nhất của khách</td></tr>
-        <tr><td><span class="chip">V2</span></td><td>Tự đồng bộ hóa đơn điện tử; rule nguồn gốc hàng hóa và chi phí định kỳ; xuất mẫu sổ</td><td>Thiết kế kho bí mật cho thông tin đăng nhập được duyệt bảo mật</td></tr>
-        <tr><td><span class="chip">Sau</span></td><td>Tính thuế, tờ khai, eTax, tích hợp phần mềm kế toán</td><td></td></tr>
+        <tr><td><span class="chip warn">0 · 1 tuần</span></td><td>Phỏng vấn 3–5 kế toán. Ngồi cạnh ít nhất 2 người khi họ xử lý trọn một hộ, một tháng thật. Ghi lại từng bước: nhận gì, tải gì, nhập vào đâu, kiểm tra gì, hỏi lại khách gì</td><td>Bảng baseline: số tin nhắn, ảnh, chuyển khoản mỗi hộ; số phút từng khâu. Bộ dữ liệu 1–2 tháng đã được phép dùng</td></tr>
+        <tr><td><span class="chip warn">1 · song song</span></td><td>Spike A Zalo OA · Spike B OCR trên 200–500 ảnh thật (độ chính xác, chi phí, thời gian) · Spike C pháp lý (dữ liệu được gửi đi đâu, đồng ý, thời hạn lưu)</td><td>Kết luận đạt hoặc không đạt cho giả định A và B; trả lời Q29, Q30, Q35, Q36</td></tr>
+        <tr><td><span class="chip">2 · Prototype offline</span></td><td>Chưa cần Zalo. Đầu vào là thư mục mỗi hộ gồm <code>messages.json</code> và các file ảnh. Pipeline xuất ra sổ theo ngày, hàng đợi duyệt và danh sách phát hiện</td><td>Đo lại thời gian của kế toán trên cùng dữ liệu. Kết luận giả định C</td></tr>
+        <tr><td><span class="chip">3 · Zalo MVP</span></td><td>Nối webhook thật. 4 màn hình: Danh sách hộ, Hộp thư, Sổ theo ngày, Cần duyệt</td><td>Chạy ổn với 1 văn phòng trong 2 tuần</td></tr>
+        <tr><td><span class="chip ok">4 · Pilot</span></td><td>2 văn phòng × 5–10 hộ, chạy trọn một kỳ</td><td>Đây là định nghĩa "xong" của MVP</td></tr>
       </tbody>
     </table>
   </div>
-  <p>Không bao giờ có: ô nhập số thuế mong muốn, tỷ suất mong muốn hay mức chi phí cần đạt.</p>
+  <p>Lưu ý cho giai đoạn 2: Zalo cá nhân không có chức năng xuất toàn bộ cuộc chat ra file. Muốn có <code>messages.json</code> thì phải chép tin chữ và tải ảnh thủ công từ Zalo PC. Việc này mất công, nên chỉ làm cho 2 hộ, và nên làm cùng kế toán trong buổi ngồi cạnh ở giai đoạn 0.</p>
 </section>
 
 <section>
@@ -344,9 +392,10 @@ td.ex { color: var(--muted); font-style: italic; }
     <div>
       <h3>Gom tin nhắn thành giao dịch</h3>
       <ul>
-        <li>Ảnh và tin chữ cùng người gửi, cách nhau dưới <code>N</code> phút được gom làm một (mặc định 3 phút, chỉnh được)</li>
-        <li>Số tiền gõ tay khớp với số OCR được dùng để tăng độ tin cậy</li>
-        <li>Gom sai thì kế toán tách hoặc gộp lại, thao tác này được lưu làm dữ liệu học</li>
+        <li>Ảnh và tin chữ cùng người gửi, cách nhau dưới <code>N</code> phút là ứng viên để gom (mặc định 3 phút, chỉnh được)</li>
+        <li>Số tiền gõ tay khớp với số OCR của đúng một ảnh thì gán vào ảnh đó</li>
+        <li>Không chắc thì không đoán: tạo nhóm "chưa chắc" và đưa vào hàng đợi duyệt</li>
+        <li>Kế toán tách hoặc gộp nhóm, thao tác được lưu làm dữ liệu học</li>
       </ul>
     </div>
     <div>
@@ -366,6 +415,52 @@ td.ex { color: var(--muted); font-style: italic; }
         <li>Tin gửi trước giờ chốt ngày (ví dụ 04:00) được tính vào ngày hôm trước</li>
         <li>Luôn lưu cả ngày gửi, ngày chứng từ và ngày hạch toán đề xuất</li>
       </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Lõi khó nhất của V1</div>
+  <h2>Các ca gom tin nhắn khó, và cách xử lý mặc định</h2>
+  <p>Gom nhóm là phần trí tuệ đầu tiên của sản phẩm, quan trọng hơn chọn mô hình AI. Bộ ca khó dưới đây sẽ thành bộ test cố định. Dữ liệu thật ở giai đoạn 0 sẽ bổ sung thêm ca mới.</p>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Tin nhắn</th><th>Vấn đề</th><th>Xử lý mặc định</th></tr></thead>
+      <tbody>
+        <tr><td><code>10:00 [ảnh A] · 10:01 [ảnh B] · 10:02 2tr5 · 10:03 tiền thịt</code></td><td>2tr5 thuộc A hay B?</td><td>So 2.500.000 với số OCR của A và B. Khớp đúng một ảnh thì gán vào ảnh đó, không khớp hoặc khớp cả hai thì đưa vào nhóm "chưa chắc"</td></tr>
+        <tr><td><code>… · 10:04 cái trên của hôm qua nhé</code></td><td>Tin sửa ngày cho tin trước đó</td><td>Nhận diện tin tham chiếu ("cái trên", "ảnh trước", "hôm qua") và áp vào nhóm liền trước. Đổi ngày đề xuất, giữ nguyên ngày gửi</td></tr>
+        <tr><td><code>10:00 [5 ảnh] · 10:01 Đây là hàng hôm qua</code></td><td>5 giao dịch hay 1?</td><td>Mỗi ảnh có tổng tiền riêng là một giao dịch; chú thích và ngày áp cho cả 5. Ảnh không có tổng (trang 2 của một hóa đơn) được ghép vào ảnh trước</td></tr>
+        <tr><td><code>[ảnh hóa đơn 3.200.000] · [ảnh chuyển khoản 3.200.000]</code></td><td>Hai chứng từ cho cùng một khoản chi</td><td>Một giao dịch chi, hai bằng chứng. Tạo MATCH loại chuyển khoản ↔ hóa đơn, không ghi chi hai lần</td></tr>
+        <tr><td><code>Hôm nay bán 8tr4, nhập hàng 3tr</code></td><td>Một tin chứa cả thu và chi</td><td>Tách thành hai bản ghi, cùng trỏ về một tin nhắn làm bằng chứng</td></tr>
+        <tr><td><code>Sửa lại: doanh thu hôm qua 9tr chứ không phải 8tr</code></td><td>Khách tự đính chính</td><td>Không ghi đè. Tạo bản ghi mới, đánh dấu thay thế bản cũ, đưa vào hàng đợi duyệt</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Vòng khép kín</div>
+  <h2>Từ phát hiện đến khi khách bổ sung xong</h2>
+  <p>Vòng này giúp kế toán dùng sản phẩm hằng ngày, chứ không chỉ mở báo cáo vào cuối tháng.</p>
+  <div class="two">
+    <div class="chat">
+      <b>MINH ANH · 01/10</b>
+      <div>⚠ Chuyển khoản 5.000.000đ, nội dung "Tiền mua nguyên liệu". Chưa có chứng từ đi kèm.</div>
+      <div class="status"><span class="chip">Đã có chứng từ</span><span class="chip">Không cần</span><span class="chip warn">Yêu cầu khách bổ sung</span></div>
+      <div class="msg"><span class="t">OA →</span><span class="bubble">Anh/chị vui lòng gửi chứng từ cho khoản chuyển khoản 5.000.000đ ngày 01/10, nội dung "Tiền mua nguyên liệu".</span></div>
+    </div>
+    <div class="tbl-scroll">
+      <table style="min-width:520px">
+        <thead><tr><th>Trạng thái phát hiện</th><th>Chuyển sang khi</th></tr></thead>
+        <tbody>
+          <tr><td><b>Mới</b></td><td>Rule tạo phát hiện kèm bằng chứng</td></tr>
+          <tr><td><b>Đã yêu cầu khách</b></td><td>Kế toán bấm gửi yêu cầu, lưu thời điểm gửi</td></tr>
+          <tr><td><b>Có chứng từ đề xuất</b></td><td>Khách gửi ảnh mới, hệ thống tạo MATCH với khoản 5.000.000đ</td></tr>
+          <tr><td><b>Đã giải quyết</b></td><td>Kế toán xác nhận MATCH. V1 chưa tự đóng phát hiện</td></tr>
+          <tr><td><b>Không cần</b></td><td>Kế toán bác bỏ và ghi lý do</td></tr>
+          <tr><td><b>Quá hạn</b></td><td>Đã yêu cầu quá N ngày mà chưa có chứng từ, nhắc kế toán</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
@@ -405,6 +500,7 @@ sequenceDiagram
   <div class="eyebrow">Mô hình dữ liệu</div>
   <h2>Các thực thể chính</h2>
   <p>Tin nhắn được gom thành nhóm giao dịch, mỗi nhóm sinh ra một hoặc nhiều bản ghi thu chi. Mọi bản ghi, dù từ Zalo hay từ file upload sau này, đều dùng chung bảng <code>RECORD</code>, nên rule không cần biết dữ liệu đến từ đâu.</p>
+  <p><code>MATCH</code> là một hệ thống con riêng, tách khỏi rule. Ghép cặp sẽ lớn dần: chuyển khoản ↔ hóa đơn, ảnh Zalo ↔ XML hóa đơn, doanh thu tự khai ↔ POS, sao kê ↔ chi phí, mua ↔ tồn kho. Rule chỉ đọc kết quả MATCH. Phát hiện được giải quyết bằng một MATCH đã xác nhận.</p>
   <div class="diagram">
 <pre class="mermaid">
 erDiagram
@@ -428,6 +524,18 @@ erDiagram
   EVIDENCE }o--|| RECORD : "trỏ tới"
   FINDING ||--o{ DECISION : "được quyết"
   RECORD ||--o{ AI_CALL : "đã gửi AI"
+  RECORD ||--o{ MATCH : "bên trái"
+  RECORD ||--o{ MATCH : "bên phải"
+  MATCH |o--o{ FINDING : "giải quyết"
+  MATCH {
+    string match_type
+    float amount_score
+    float date_score
+    float party_score
+    float content_score
+    float confidence
+    string status
+  }
   SENDER {
     string zalo_user_id
     string display_name
@@ -463,46 +571,106 @@ erDiagram
     string severity
     decimal amount
     string suggested_action
+    string status
+    datetime requested_at
   }
 </pre>
+  <p><code>MATCH.status</code> có 4 giá trị: tự ghép, đề xuất, đã xác nhận, bị bác bỏ. Trong V1, mọi MATCH dùng để đóng phát hiện đều phải được kế toán xác nhận.</p>
   </div>
 </section>
 
 <section>
-  <div class="eyebrow">Rule theo giai đoạn</div>
-  <h2>Rule V1 chạy được chỉ với dữ liệu Zalo</h2>
-  <p>Căn cứ pháp lý của từng rule cần người có chuyên môn thuế xác minh (Q11).</p>
+  <div class="eyebrow">Rule</div>
+  <h2>Hai loại rule: V1 chỉ làm rule chất lượng dữ liệu</h2>
+  <p>Rule chất lượng dữ liệu chỉ ra chỗ thiếu, trùng, mâu thuẫn mà không cần kết luận về thuế. Rule thuế (khoản này có được tính chi phí không, bắt buộc chứng từ gì) cần chuyên gia duyệt nên để sau V1. Cách chia này giúp ship được V1 mà chưa phải xây một hệ chuyên gia thuế.</p>
+  <h3>Rule chất lượng dữ liệu · V1</h3>
   <div class="tbl-scroll">
     <table>
-      <thead><tr><th>Mã</th><th>Giai đoạn</th><th>Kiểm tra</th><th>Mức</th><th>Ví dụ gợi ý cho kế toán</th></tr></thead>
+      <thead><tr><th>Mã</th><th>Kiểm tra</th><th>Mức</th><th>Ví dụ gợi ý cho kế toán</th></tr></thead>
       <tbody>
-        <tr><td><span class="mono">ZL-01</span></td><td>V1</td><td>Ảnh chuyển khoản chi tiền chưa có hóa đơn cùng số tiền trong ±7 ngày</td><td><span class="chip warn">Cần kiểm tra</span></td><td class="ex">01/10 chuyển 5.000.000đ "tiền mua nguyên liệu", chưa có hóa đơn. Đề nghị khách gửi hóa đơn của nhà cung cấp.</td></tr>
-        <tr><td><span class="mono">ZL-02</span></td><td>V1</td><td>Doanh thu chỉ có tin nhắn tự khai, chưa có nguồn đối chiếu</td><td><span class="chip info">Nên xác nhận</span></td><td class="ex">Tháng 10 có 28 ngày doanh thu tự khai, tổng 341.000.000đ, chưa có POS hoặc hóa đơn đầu ra.</td></tr>
-        <tr><td><span class="mono">ZL-03</span></td><td>V1</td><td>Ngày kinh doanh không có tin doanh thu</td><td><span class="chip info">Nên xác nhận</span></td><td class="ex">Chưa có doanh thu ngày 07/10 và 14/10. Hỏi khách có nghỉ bán không.</td></tr>
-        <tr><td><span class="mono">HD-01</span></td><td>V1</td><td>Chứng từ trùng: cùng ảnh, hoặc cùng người bán, số hóa đơn, số tiền</td><td><span class="chip warn">Cần kiểm tra</span></td><td class="ex">Ảnh hóa đơn gas 950.000đ được gửi 2 lần (02/10 và 05/10).</td></tr>
-        <tr><td><span class="mono">HD-02</span></td><td>V1</td><td>Lệch ngày: chứng từ gửi muộn hoặc thuộc kỳ khác</td><td><span class="chip warn">Cần kiểm tra</span></td><td class="ex">Gửi 05/10 nhưng hóa đơn ngày 28/09. Đề xuất hạch toán vào tháng 9.</td></tr>
-        <tr><td><span class="mono">HD-03</span></td><td>V1</td><td>MST người bán sai định dạng hoặc sai số kiểm tra</td><td><span class="chip warn">Cần kiểm tra</span></td><td class="ex">MST đọc được 031234567 thiếu chữ số. Đối chiếu với ảnh gốc.</td></tr>
-        <tr><td><span class="mono">DT-01</span></td><td>V1.1</td><td>Doanh thu POS hoặc tiền vào lớn hơn hóa đơn đầu ra theo ngày</td><td><span class="chip crit">Nghiêm trọng</span></td><td class="ex">12/10: POS 8.400.000đ, hóa đơn đã xuất 6.100.000đ.</td></tr>
-        <tr><td><span class="mono">CP-01</span></td><td>V1.1</td><td>Tiền chi trên sao kê chưa khớp chứng từ nào</td><td><span class="chip info">Nên xác nhận</span></td><td class="ex">16/10 chuyển 12.300.000đ cho [người nhận], chưa có chứng từ.</td></tr>
-        <tr><td><span class="mono">HH-01</span></td><td>V2</td><td>Nguồn gốc hàng hóa: tồn đầu + mua − bán &lt; 0</td><td><span class="chip crit">Nghiêm trọng</span></td><td class="ex">Thiếu nguồn gốc 70 thùng nước ngọt. Có 3 khoản chuyển cho nhà cung cấp chưa có hóa đơn.</td></tr>
-        <tr><td><span class="mono">CP-02</span></td><td>V2</td><td>Chi phí định kỳ thiếu chứng từ</td><td><span class="chip info">Nên xác nhận</span></td><td class="ex">Chuyển 15.000.000đ ngày 5 hàng tháng, có thể là tiền thuê. Đề nghị bổ sung hợp đồng.</td></tr>
+        <tr><td><span class="mono">DQ-01</span></td><td>Khoản chi (ảnh chuyển khoản) chưa có chứng từ đi kèm trong ±7 ngày</td><td><span class="chip warn">Cần kiểm tra</span></td><td class="ex">01/10 chuyển 5.000.000đ "tiền mua nguyên liệu", chưa có chứng từ đi kèm.</td></tr>
+        <tr><td><span class="mono">DQ-02</span></td><td>Chứng từ trùng: cùng ảnh, hoặc cùng người bán, số hóa đơn, số tiền</td><td><span class="chip warn">Cần kiểm tra</span></td><td class="ex">Ảnh hóa đơn gas 950.000đ được gửi 2 lần (02/10 và 05/10).</td></tr>
+        <tr><td><span class="mono">DQ-03</span></td><td>Thiếu hoặc mâu thuẫn trường: không đọc được ngày, số tiền gõ tay khác số trên ảnh, MST sai định dạng</td><td><span class="chip warn">Cần kiểm tra</span></td><td class="ex">Tin nhắn ghi 2tr5, ảnh hóa đơn ghi 2.350.000đ.</td></tr>
+        <tr><td><span class="mono">DQ-04</span></td><td>Gửi muộn: ngày chứng từ cách ngày gửi nhiều ngày hoặc thuộc kỳ khác</td><td><span class="chip info">Nên xác nhận</span></td><td class="ex">Gửi 05/10 nhưng hóa đơn ngày 28/09. Đề xuất hạch toán vào tháng 9.</td></tr>
+        <tr><td><span class="mono">DQ-05</span></td><td>Ngày kinh doanh không có tin doanh thu</td><td><span class="chip info">Nên xác nhận</span></td><td class="ex">Chưa có doanh thu ngày 07/10 và 14/10. Hỏi khách có nghỉ bán không.</td></tr>
+        <tr><td><span class="mono">DQ-06</span></td><td>Doanh thu chỉ có tin nhắn tự khai, chưa có nguồn đối chiếu</td><td><span class="chip info">Nên xác nhận</span></td><td class="ex">Tháng 10 có 28 ngày doanh thu tự khai, tổng 341.000.000đ, chưa có POS hoặc hóa đơn đầu ra.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>DQ-01 được viết là "chưa có chứng từ đi kèm", không phải "chưa có hóa đơn". Khoản đó cần hóa đơn, bảng kê hay không cần gì (trả lương, mua của nông dân) là câu hỏi thuế, nên V1 chưa kết luận.</p>
+  <h3>Rule thuế và nghiệp vụ · sau V1, cần chuyên gia duyệt (Q11)</h3>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Mã</th><th>Giai đoạn</th><th>Kiểm tra</th><th>Cần thêm dữ liệu</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">TX-01</span></td><td>V1.1</td><td>Doanh thu POS hoặc tiền vào lớn hơn hóa đơn đầu ra theo ngày</td><td>POS, XML hóa đơn, sao kê</td></tr>
+        <tr><td><span class="mono">TX-02</span></td><td>V1.1</td><td>Tiền chi trên sao kê chưa khớp chứng từ hợp lệ</td><td>Sao kê</td></tr>
+        <tr><td><span class="mono">TX-03</span></td><td>V2</td><td>Loại chứng từ bắt buộc theo từng loại chi phí</td><td>Phương pháp thuế của hộ</td></tr>
+        <tr><td><span class="mono">TX-04</span></td><td>V2</td><td>Nguồn gốc hàng hóa: tồn đầu + mua − bán &lt; 0</td><td>XML hóa đơn, mã hàng, tồn đầu</td></tr>
+        <tr><td><span class="mono">TX-05</span></td><td>V2</td><td>Chi phí định kỳ thiếu chứng từ (thuê nhà, lương)</td><td>Sao kê nhiều kỳ</td></tr>
       </tbody>
     </table>
   </div>
 </section>
 
 <section>
-  <div class="eyebrow">Ràng buộc bắt buộc</div>
-  <h2>Những điều hệ thống không bao giờ làm</h2>
-  <ul class="guard">
-    <li><span class="n">G1</span><span>Không tạo phát hiện nào nếu không có ít nhất một bằng chứng gốc. Ràng buộc này nằm trong code.</span></li>
-    <li><span class="n">G2</span><span>Không có ô nhập số thuế mong muốn, tỷ suất mong muốn hay mức chi phí cần đạt.</span></li>
-    <li><span class="n">G3</span><span>Không gợi ý nhà cung cấp mà hộ chưa từng giao dịch, không gợi ý số tiền hóa đơn cần "thêm".</span></li>
-    <li><span class="n">G4</span><span>AI không tạo phát hiện và không tính thuế. Phát hiện chỉ đến từ rule có phiên bản.</span></li>
-    <li><span class="n">G5</span><span>Ảnh gốc và thông tin nhạy cảm chưa ẩn không bao giờ được gửi ra nước ngoài. Mọi lần gửi đều được ghi nhật ký.</span></li>
-    <li><span class="n">G6</span><span>Doanh thu tự khai qua tin nhắn chỉ là số để đối chiếu, không được coi là chứng từ.</span></li>
-    <li><span class="n">G7</span><span>Mọi sửa đổi và quyết định đều có audit log. Dữ liệu chỉ vào tập training khi đã có đồng ý riêng và đã ẩn danh.</span></li>
-  </ul>
+  <div class="eyebrow">Ràng buộc thành test</div>
+  <h2>Mỗi nguyên tắc là một test tự động, chạy ở mọi lần build</h2>
+  <p>Các nguyên tắc dưới đây là bất biến của hệ thống chứ không chỉ là tài liệu. Vi phạm bất kỳ test nào thì build fail.</p>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Mã</th><th>Nguyên tắc</th><th>Test tự động</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">G1</span></td><td>Phát hiện phải có bằng chứng gốc</td><td>Tạo phát hiện không có bằng chứng → API từ chối, ràng buộc DB chặn</td></tr>
+        <tr><td><span class="mono">G2</span></td><td>Không có ô nhập mục tiêu</td><td>Quét schema API và form: không trường nào tên kiểu <code>target_*</code>, <code>desired_*</code>; danh sách trường được duyệt cố định</td></tr>
+        <tr><td><span class="mono">G3</span></td><td>Không gợi ý nhà cung cấp mới hay số tiền cần "thêm"</td><td>Mọi đối tượng xuất hiện trong gợi ý phải đã có trong RECORD của hộ</td></tr>
+        <tr><td><span class="mono">G4</span></td><td>AI không tạo phát hiện, không tính thuế</td><td>Kết quả AI chứa trường phát hiện hay số thuế → bị loại bỏ, ghi log</td></tr>
+        <tr><td><span class="mono">G5</span></td><td>Dữ liệu chưa ẩn không ra nước ngoài</td><td>Payload còn thông tin nhạy cảm, hoặc cờ đã ẩn bằng false → lệnh gọi AI nước ngoài bị chặn</td></tr>
+        <tr><td><span class="mono">G6</span></td><td>Doanh thu tự khai không phải chứng từ</td><td>Bản ghi từ tin nhắn tự khai không thể làm bằng chứng để đóng phát hiện</td></tr>
+        <tr><td><span class="mono">G7</span></td><td>Mọi sửa đổi có audit log, không xóa cứng</td><td>Mỗi lần sửa RECORD, MATCH, FINDING sinh đúng một dòng audit; lệnh DELETE bị chặn</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Đo lường</div>
+  <h2>Chỉ số chính: số phút kế toán làm tay cho mỗi hộ mỗi kỳ</h2>
+  <div class="two">
+    <div class="tbl-scroll">
+      <table style="min-width:360px">
+        <thead><tr><th>Khâu (ví dụ, sẽ thay bằng số đo thật)</th><th style="text-align:right">Phút</th></tr></thead>
+        <tbody>
+          <tr><td>Tải và phân loại ảnh, tin nhắn</td><td style="text-align:right">45</td></tr>
+          <tr><td>Nhập Excel</td><td style="text-align:right">60</td></tr>
+          <tr><td>Đối chiếu</td><td style="text-align:right">90</td></tr>
+          <tr><td>Hỏi lại khách</td><td style="text-align:right">30</td></tr>
+          <tr><td><b>Tổng baseline</b></td><td style="text-align:right"><b>225</b></td></tr>
+          <tr><td><b>Mục tiêu V1</b></td><td style="text-align:right"><b>≤ 90</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="rules3" style="grid-template-columns:1fr">
+      <div>
+        <h3>Chỉ số phụ</h3>
+        <ul>
+          <li>Tỷ lệ gom nhóm đúng</li>
+          <li>Tỷ lệ bản ghi phải sửa</li>
+          <li>Tỷ lệ MATCH tự động được xác nhận</li>
+          <li>Tỷ lệ phát hiện được chấp nhận</li>
+          <li>Chi phí OCR và AI cho mỗi hộ mỗi tháng</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Chỉ số bảo vệ chất lượng</h3>
+        <ul>
+          <li>Số chứng từ thiếu mà kế toán tự phát hiện sau, hệ thống bỏ sót. Chỉ số này không được tăng</li>
+        </ul>
+        <p style="font-size:.86rem;color:var(--muted)">Thiếu chỉ số này, số phút có thể giảm chỉ vì kế toán bỏ qua bước kiểm tra. Baseline và lần đo sau phải dùng cùng dữ liệu, cùng cách đo.</p>
+      </div>
+    </div>
+  </div>
+  <p>Định giá theo số hộ (ví dụ các gói đến 20, 100, 500 hộ) dễ hiểu với kế toán hơn tính theo số trang OCR. Giá phải kiểm chứng ngay ở giai đoạn 0, vì phí dịch vụ kế toán cho hộ thường thấp.</p>
 </section>
 
 <section>
@@ -558,20 +726,18 @@ erDiagram
     <div class="q"><span class="id">Q25</span><div class="text">V1 chỉ cần web trên máy tính?</div><div class="rec"><b>Đề xuất:</b> đúng vậy. Chủ hộ dùng Zalo, kế toán dùng web.</div></div>
     <div class="q"><span class="id">Q26</span><div class="text">Hạ tầng cloud nào?</div><div class="rec"><b>Đề xuất:</b> cloud trong nước cho lưu trữ và OCR theo quyết định hybrid. Đóng gói bằng container để dễ chuyển.</div></div>
     <div class="q"><span class="id">Q27</span><div class="text">Mốc thời gian MVP?</div><div class="rec"><b>Đề xuất:</b> xong khi 2 văn phòng xử lý trọn một kỳ thật qua Zalo.</div></div>
-    <div class="q"><span class="id">Q28</span><div class="text">Chỉ số thành công?</div><div class="rec"><b>Đề xuất:</b> số phút kế toán xử lý một hộ một ngày, tỷ lệ bản ghi không cần sửa, tỷ lệ phát hiện được chấp nhận.</div></div>
+    <div class="q"><span class="id">Q28</span><div class="text">Chỉ số thành công?</div><div class="rec"><b>Đã cập nhật:</b> chỉ số chính là số phút làm tay cho mỗi hộ mỗi kỳ, xem phần Đo lường.</div></div>
   </div>
 </section>
 
 <section>
   <div class="eyebrow">Bước tiếp theo</div>
-  <h2>Thứ tự làm việc đề xuất</h2>
+  <h2>Việc làm ngay trong tuần này</h2>
   <ol class="steps">
-    <li><span>Tìm 2–3 kế toán làm design partner. Phỏng vấn để trả lời Q3, Q6, Q7, Q16, Q30 và xin bộ chứng từ mẫu đã được đồng ý.</span></li>
-    <li><span>Spike kỹ thuật Zalo OA (khoảng 1 tuần): đăng ký OA thử, kiểm tra nhận ảnh qua webhook, nhận tin trong nhóm, giới hạn gửi tin, chi phí và điều kiện xác thực. Kết quả trả lời Q29, Q30, Q31.</span></li>
-    <li><span>Spike OCR trong nước: thử 2–3 phương án trên 200 chứng từ thật (Q35). Song song hỏi luật sư về Q36.</span></li>
-    <li><span>Viết đặc tả chi tiết cho pipeline Zalo (gom tin, đọc số tiền, xác định ngày) và 6 rule V1, có ví dụ đầu vào và đầu ra.</span></li>
-    <li><span>Viết code lõi kèm test: mô hình dữ liệu, parser số tiền, gom tin nhắn, rule engine. Phần này làm được ngay mà không cần chờ Zalo và OCR.</span></li>
-    <li><span>Nối webhook Zalo, OCR, bộ ẩn danh và AI. Làm giao diện: danh sách hộ, hộp thư Zalo, sổ theo ngày, hàng đợi duyệt, việc cần xử lý.</span></li>
+    <li><span>Tìm 3–5 kế toán đồng ý phỏng vấn, trong đó 2 người cho ngồi cạnh khi xử lý một hộ thật.</span></li>
+    <li><span>Chuẩn bị mẫu ghi baseline: số tin nhắn, ảnh, chuyển khoản, số phút từng khâu, các câu hỏi lại khách.</span></li>
+    <li><span>Đăng ký Zalo OA thử nghiệm để bắt đầu spike A song song.</span></li>
+    <li><span>Viết định dạng <code>messages.json</code> và bộ ca gom tin khó thành test, để prototype offline sẵn sàng khi có dữ liệu.</span></li>
   </ol>
 </section>
 
