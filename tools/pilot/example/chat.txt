@@ -1,0 +1,13 @@
+# hộ: Quán Minh Anh (ví dụ)
+# giờ chốt: 04:00
+# người gửi: Chị Lan = owner; Tuấn = staff; Hà = accountant
+== 02/10/2026 ==
+10:00 Chị Lan: [ảnh hd_001.jpg]
+10:01 Chị Lan: [ảnh hd_002.jpg]
+10:02 Chị Lan: 2tr5
+10:03 Chị Lan: tiền thịt
+10:04 Chị Lan: cái trên của hôm qua nhé
+10:10 Tuấn: chi 500k tiền ship, chuyển vào stk 0071000123456
+10:12 Hà: [sticker]
+21:10 Chị Lan: Doanh thu hôm nay 12tr5
+          (chưa tính 2 bàn chuyển khoản)
