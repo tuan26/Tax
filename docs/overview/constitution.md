@@ -1,7 +1,7 @@
 # Accounting Intake Agent
 
-**Date**: 2026-10-12 11:32 (Format: yyyy-MM-dd HH:mm — update each time constitution.md is edited)
-**Version**: 2.0.0.0 (Format: A.0.0.0 — Increment A each time constitution.md is edited; Always retain the note from this line as-is in the created file)
+**Date**: 2026-10-27 05:44 (Format: yyyy-MM-dd HH:mm — update each time constitution.md is edited)
+**Version**: 3.0.0.0 (Format: A.0.0.0 — Increment A each time constitution.md is edited; Always retain the note from this line as-is in the created file)
 
 ---
 
@@ -25,17 +25,17 @@
 | Purpose | Hiện trạng: tốn thời gian, dễ sai, khó mở rộng khi một kế toán phụ trách nhiều khách hàng.<br>Mong muốn: chuẩn hóa và tự động hóa khâu intake để kế toán tập trung xử lý ngoại lệ. |
 | Objective | Tự động hóa quy trình intake chứng từ; giảm thời gian thao tác thủ công theo mục tiêu pilot; nâng chất lượng dữ liệu đầu vào trước hạch toán. |
 | Timeline | Chia theo 10 Epic MVP V1; sequencing theo phụ thuộc kỹ thuật và nghiệp vụ. |
-| Scope of work | Functional requirements:<br>- Telegram intake (text/image/PDF)<br>- Customer & Conversation management<br>- OCR + extraction cơ bản hóa đơn<br>- AI intent understanding và liên kết tin nhắn/chứng từ<br>- Validation thiếu/trùng/mâu thuẫn<br>- Exception + approval workflow + duyệt câu hỏi trước gửi Telegram<br>- Dashboard kế toán cơ bản<br>- Export Excel/CSV<br>- Security/Audit/Testing cốt lõi<br>Non-functional requirements:<br>- Security, traceability, idempotency, phân quyền theo vai trò, testability, kiến trúc module hóa |
+| Scope of work | Functional requirements:<br>- Intake chứng từ từ Zalo (ảnh/PDF/tin nhắn); pilot đầu tiên nhập thủ công: tải chứng từ lên, chép chat<br>- Customer & Conversation management<br>- OCR + extraction cơ bản hóa đơn<br>- AI intent understanding và liên kết tin nhắn/chứng từ<br>- Validation thiếu/trùng/mâu thuẫn<br>- Exception + approval workflow + duyệt câu hỏi trước khi gửi khách<br>- Dashboard kế toán cơ bản<br>- Export Excel/CSV<br>- Security/Audit/Testing cốt lõi<br>Non-functional requirements:<br>- Security, traceability, idempotency, phân quyền theo vai trò, multi-tenant với cô lập dữ liệu tại PostgreSQL (RLS), testability, kiến trúc module hóa |
 | Input | Brief nghiệp vụ đã xác nhận, chính sách ngôn ngữ, ranh giới MVP V1, danh sách 10 Epic, governance constraints, external constraints, KPI định hướng pilot. |
 | Output | Deliverables:<br>- Bộ tài liệu overview + constitution cho MVP V1 và Epic split<br>- Định nghĩa scope rõ ràng để làm đầu vào cho specify/plan/tasks<br>Hình thức bàn giao:<br>- Tài liệu trong thư mục `docs/overview/` của repository |
 | Completion Criteria | Overview thống nhất Domain, Users, Goals, Scope, Out of Scope, Governance, External Constraints, Language Policy, Epic Split; không mở rộng sang V2–V5. |
 | System (Tool) name | Accounting Intake Agent |
-| Model/Service | OCR engine + LLM theo hướng provider-agnostic (chưa chốt vendor cụ thể ở bước overview) |
+| Model/Service | OCR theo kiến trúc đã phê duyệt (mục 3.13). Không tự động thêm LLM hoặc dịch vụ AI bên ngoài; không gửi dữ liệu khách hàng tới dịch vụ AI nước ngoài trong giai đoạn hiện tại |
 | Environment | DEV, STG, PROD |
 | - Server | Containerized services (Docker) trên hạ tầng sẽ quyết định ở giai đoạn plan |
-| - License | Sẽ xác nhận khi chọn vendor OCR/LLM và thư viện phụ thuộc |
+| - License | Sẽ xác nhận khi chọn OCR và thư viện phụ thuộc |
 | - OSS | Cho phép dùng OSS phù hợp chính sách bảo mật và license của tổ chức |
-| - Hardware/Software/Network | Ưu tiên môi trường đủ cho xử lý OCR/LLM và web dashboard |
+| - Hardware/Software/Network | Ưu tiên môi trường đủ cho xử lý OCR và web dashboard |
 | - OS | Linux (ưu tiên) |
 | - Device | Desktop/Laptop cho kế toán và quản lý |
 | - Browser | Chrome/Edge bản mới |
@@ -113,13 +113,13 @@ Accounting Intake Agent là hệ thống AI Automation hỗ trợ công ty dịc
 
 ### In Scope (chỉ MVP V1)
 
-1. Telegram Bot API tiếp nhận text/image/PDF.
-2. Quản lý Customer và liên kết Telegram user/chat.
+1. Tiếp nhận chứng từ và tin nhắn từ Zalo (ảnh, PDF, text). Pilot đầu tiên: kế toán nhập thủ công (tải chứng từ lên, chép chat); chưa dùng Zalo OA.
+2. Quản lý Customer và liên kết người gửi trên Zalo với Customer.
 3. Lưu trữ Message, Conversation, Document.
 4. OCR + trích xuất dữ liệu cơ bản từ hóa đơn.
 5. AI nhận diện intent và liên kết tin nhắn với chứng từ liên quan.
 6. Validation cho thiếu dữ liệu, trùng lặp, mâu thuẫn.
-7. AI follow-up qua Telegram theo cơ chế duyệt bắt buộc trước khi gửi.
+7. Soạn yêu cầu bổ sung chứng từ, bắt buộc kế toán duyệt trước khi gửi. Pilot (chưa có Zalo OA): kế toán tự gửi qua Zalo; hệ thống không tự gửi.
 8. Dashboard cơ bản: Customer List, Document List, Document Detail, Exception Inbox, Overview.
 9. Accountant Review/Approve/Reject/Correct.
 10. Export dữ liệu đã duyệt ra Excel/CSV.
@@ -131,15 +131,19 @@ Accounting Intake Agent là hệ thống AI Automation hỗ trợ công ty dịc
 - Backend: Python + FastAPI
 - Database: PostgreSQL
 - Web Dashboard: Next.js
-- Channel Integration: Telegram Bot API
-- AI/Data Extraction: OCR engine + LLM theo hướng provider-agnostic
+- Channel Integration: Zalo. Pilot đầu tiên nhập thủ công; Zalo OA chỉ triển khai sau khi xác minh nhu cầu, khả năng tích hợp, chi phí và được duyệt. Telegram không phải kênh MVP.
+- AI/Data Extraction: OCR theo kiến trúc đã phê duyệt (mục 3.13). Không có LLM hoặc dịch vụ AI bên ngoài trong luồng xử lý.
+- Multi-tenant: mỗi công ty dịch vụ kế toán là một tenant, cô lập bằng PostgreSQL Row Level Security (mục 3.14)
 - Runtime/Development: Docker
 
 ## 3.5 Future Roadmap (ngoài MVP hiện tại, chưa triển khai)
 
 - V2: Import sao kê ngân hàng, Transaction Matching, Missing Document Detection.
 - V3: AI follow-up tự động nâng cao, reminder policy, conversation memory nâng cao.
-- V4: Zalo OA, Email, MISA/EasyBooks integration, multi-tenant.
+- Zalo OA: sau khi xác minh nhu cầu, khả năng tích hợp và chi phí, cần được duyệt (không gắn với phiên bản cụ thể).
+- V4: Email, MISA/EasyBooks integration.
+- Telegram: chỉ bổ sung khi có lý do kinh doanh rõ ràng và được duyệt.
+- LLM hoặc dịch vụ AI bên ngoài: chỉ xem xét qua đề xuất theo mục 3.13.
 - V5: Dashboard nâng cao, business rules theo khách hàng, AI học từ feedback, mở rộng accounting context graph.
 
 ## 3.6 Out of Scope
@@ -148,24 +152,26 @@ Accounting Intake Agent là hệ thống AI Automation hỗ trợ công ty dịc
 2. Tự động hạch toán chính thức vào MISA.
 3. Tự động tính/kê khai/nộp thuế hoặc lập báo cáo tài chính.
 4. Tích hợp ngân hàng trực tiếp trong MVP.
-5. Zalo OA, Email, Messenger integration trong MVP.
+5. Zalo OA (cho tới khi được xác minh và duyệt), Telegram, Email, Messenger integration trong MVP.
 6. Mobile app native.
 7. Tự động gửi hàng loạt tin nhắn nhắc chứng từ không kiểm soát.
 8. AI tự quyết định kế toán/thuế có ảnh hưởng pháp lý mà không có phê duyệt người phụ trách.
 9. Hệ thống tự học/thay đổi business rules trong production không kiểm soát.
+10. Gửi dữ liệu khách hàng tới dịch vụ AI nước ngoài; tự động thêm LLM hoặc dịch vụ AI bên ngoài vào luồng xử lý.
+11. Dùng dữ liệu pilot để huấn luyện mô hình khi chưa có sự đồng ý riêng phù hợp.
 
 ## 3.7 External Constraints
 
 ### Business Constraints
 
-1. MVP dùng Telegram Bot API; mở rộng Zalo OA phải tuân thủ quyền truy cập và policy nền tảng.
+1. MVP lấy Zalo làm kênh ưu tiên. Không đọc chat Zalo cá nhân bằng phương thức không chính thức; Zalo OA phải tuân thủ quyền truy cập, policy và chi phí của nền tảng.
 2. Tích hợp MISA/EasyBooks phụ thuộc API, quyền và điều kiện sử dụng của nhà cung cấp.
 3. KPI mục tiêu chỉ là mục tiêu pilot, cần xác nhận sau khi đo baseline thực tế.
 
 ### Technical Constraints
 
-1. Dữ liệu chứng từ có thể chứa thông tin cá nhân/tài chính nhạy cảm, cần bảo vệ khi lưu trữ, truyền tải, và gửi dịch vụ OCR/LLM bên ngoài.
-2. Bắt buộc phân tách dữ liệu giữa khách hàng và kiểm soát truy cập theo vai trò.
+1. Dữ liệu chứng từ có thể chứa thông tin cá nhân/tài chính nhạy cảm, cần bảo vệ khi lưu trữ, truyền tải và xử lý OCR.
+2. Bắt buộc phân tách dữ liệu giữa tenant và giữa khách hàng, kiểm soát truy cập theo vai trò (mục 3.14).
 3. Có chính sách retention, xóa dữ liệu, backup, audit log phù hợp.
 
 ### Compliance Constraints
@@ -177,7 +183,7 @@ Accounting Intake Agent là hệ thống AI Automation hỗ trợ công ty dịc
 
 ### Document Status
 
-1. `RECEIVED`: Hệ thống đã tiếp nhận tài liệu từ Telegram nhưng chưa xử lý OCR/AI hoàn chỉnh.
+1. `RECEIVED`: Hệ thống đã tiếp nhận tài liệu từ kênh tiếp nhận nhưng chưa xử lý OCR/AI hoàn chỉnh.
 2. `PROCESSING`: Đang thực hiện OCR, extraction, intent linking hoặc validation.
 3. `NEEDS_REVIEW`: Có cảnh báo thiếu/trùng/mâu thuẫn hoặc uncertainty, cần Accountant xử lý.
 4. `APPROVED`: Accountant đã xác nhận tài liệu đủ điều kiện đi tiếp sang export/integration scope của MVP.
@@ -199,9 +205,9 @@ Accounting Intake Agent là hệ thống AI Automation hỗ trợ công ty dịc
 3. AI/service chỉ được chuyển trạng thái kỹ thuật `RECEIVED` → `PROCESSING` → `NEEDS_REVIEW` khi có evidence rõ ràng.
 4. Mọi chuyển trạng thái phải có Audit Log gồm actor, timestamp, trạng thái trước/sau, lý do và reference IDs.
 
-## 3.9 Telegram Customer Identity Verification
+## 3.9 Customer Identity Verification (người gửi ↔ Customer)
 
-1. Liên kết Telegram User/Chat ↔ Customer phải được Admin hoặc Accountant xác nhận trước khi đưa vào xử lý nghiệp vụ chính thức.
+1. Liên kết người gửi trên kênh tiếp nhận (Zalo) ↔ Customer phải được Admin hoặc Accountant xác nhận trước khi đưa vào xử lý nghiệp vụ chính thức. Khi nhập thủ công, Accountant chọn Customer cho từng đợt nhập; lựa chọn đó là bước xác nhận và phải được audit.
 2. AI không được tự xác nhận chủ sở hữu chứng từ chỉ dựa trên tên người gửi, nội dung hội thoại hoặc OCR text.
 3. Dữ liệu chưa xác minh chủ sở hữu phải ở vùng chờ xác minh riêng (`UNVERIFIED_QUEUE`) và không được auto-approve.
 4. Khi thiếu căn cứ định danh, hệ thống phải tạo exception để human review thay vì tự động gán Customer.
@@ -238,6 +244,29 @@ Accounting Intake Agent là hệ thống AI Automation hỗ trợ công ty dịc
 4. UI ưu tiên tiếng Việt cho người dùng Việt Nam.
 5. Giữ nguyên các thuật ngữ kỹ thuật đã chốt: Accounting Intake Agent, Customer, Accountant, Manager, Admin, OCR, LLM, Document, Conversation, Intent, Validation, Matching, Exception, Human-in-the-loop, API, MVP, Telegram, Zalo, MISA, Audit Log.
 
+## 3.13 AI & Data Policy
+
+1. OCR được phép sử dụng theo kiến trúc đã phê duyệt, với điều kiện đáp ứng yêu cầu bảo mật và xử lý dữ liệu.
+2. Không gửi dữ liệu khách hàng đến dịch vụ AI nước ngoài trong giai đoạn hiện tại.
+3. Không tự động thêm LLM hoặc dịch vụ AI bên ngoài vào luồng xử lý.
+4. Mọi đề xuất thay đổi chính sách này phải nêu rõ: nhà cung cấp, nơi xử lý dữ liệu, loại dữ liệu được gửi, chi phí và các vấn đề pháp lý cần xác minh; chỉ áp dụng sau khi được duyệt và cập nhật Constitution.
+5. Không sử dụng dữ liệu pilot để huấn luyện mô hình nếu chưa có sự đồng ý riêng phù hợp.
+
+## 3.14 Multi-tenant & Tenant Isolation
+
+1. Kiến trúc multi-tenant áp dụng ngay từ MVP: mỗi công ty dịch vụ kế toán là một tenant.
+2. Cô lập dữ liệu giữa tenant được thực thi tại PostgreSQL bằng Row Level Security, không chỉ ở tầng API.
+3. Ứng dụng kết nối bằng role không phải superuser, không có BYPASSRLS.
+4. Không được coi RLS là an toàn chỉ vì migration hoặc test cơ bản đã qua. Phải kiểm tra bằng role ứng dụng, với các tình huống truy cập chéo tenant: đọc, sửa, xóa, chèn dữ liệu mang tenant khác, tham chiếu khóa ngoại sang tenant khác, truy cập khi chưa xác định tenant, và các hàm chạy với quyền nâng cao (SECURITY DEFINER).
+
+## 3.15 Requirement Sources
+
+1. Constitution xác định nguyên tắc bất biến, ranh giới bảo mật và các quyết định kiến trúc cấp cao.
+2. Spec xác định hành vi và tiêu chí nghiệm thu của từng tính năng.
+3. Code phải tuân theo các tài liệu đã được phê duyệt.
+4. Khi code, Constitution và Spec mâu thuẫn, không tự chọn một bên: báo cáo mâu thuẫn và đề xuất sửa trước khi tiếp tục.
+5. Giữ nguyên lịch sử Git; không rebase, force-push hoặc xóa thay đổi hiện có.
+
 ---
 
 # 4. PROJECT STAGES (EPIC SPLIT)
@@ -258,36 +287,38 @@ Thiết lập nền tảng kỹ thuật tối thiểu để các Epic sau phát 
 ### Deliverables
 - Khung backend/frontend/database chạy được bằng Docker.
 - Cơ chế authentication và phân quyền vai trò cơ bản.
+- Nền tảng multi-tenant với cô lập dữ liệu bằng Row Level Security (mục 3.14).
 - Thiết lập config môi trường và quản lý secrets theo nguyên tắc không hard-code.
 
 ### Completion Criteria
 - Môi trường local khởi chạy ổn định.
 - Người dùng theo vai trò truy cập đúng phạm vi chức năng cơ bản.
 - Có UT cơ bản cho auth/authorization rules cốt lõi.
+- Có test truy cập chéo tenant chạy bằng role ứng dụng theo mục 3.14.
 
 ---
 
-## 4.2 Epic 2: Telegram Integration
+## 4.2 Epic 2: Channel Intake (Zalo-first)
 
 ### Scope Objective
-Xây dựng kênh intake chính của MVP V1 để nhận dữ liệu đầu vào từ Telegram.
+Xây dựng kênh intake chính của MVP V1 để nhận dữ liệu đầu vào từ Zalo. Pilot đầu tiên dùng nhập thủ công; Zalo OA không thuộc phạm vi cho tới khi được xác minh và duyệt (mục 3.4, 3.5).
 
 ### Prerequisites
 - Hoàn thành Epic 1.
-- Có bot token, webhook endpoint dev/test hợp lệ.
 
 ### Required Inputs
-- Telegram channel policy và format dữ liệu cần lưu.
-- Danh sách loại message hỗ trợ (text/image/PDF).
+- Định dạng dữ liệu cần lưu cho tin nhắn và chứng từ, độc lập với kênh (nguồn dữ liệu được ghi rõ cho từng tin).
+- Danh sách loại nội dung hỗ trợ (text/image/PDF).
 
 ### Deliverables
-- Telegram bot + webhook receiver.
-- Pipeline tiếp nhận và lưu message payload có idempotency/retry.
+- Nhập thủ công: tải chứng từ lên, dán hoặc chép nội dung chat Zalo, Accountant chọn Customer và ngày kinh doanh cho mỗi đợt nhập.
+- Không tự điền metadata không có bằng chứng (giờ gửi, người gửi).
+- Pipeline tiếp nhận và lưu dữ liệu gốc có idempotency/retry.
 - Logging và xử lý lỗi cơ bản cho inbound flow.
 
 ### Completion Criteria
-- Nhận thành công text/image/PDF từ Telegram vào hệ thống.
-- Không tạo bản ghi trùng khi webhook được gửi lại.
+- Nhập thành công text/image/PDF vào hệ thống, dữ liệu gốc không bị sửa hay mất.
+- Không tạo bản ghi trùng khi thao tác nhập được gửi lại.
 - Có test tích hợp cho luồng tiếp nhận chính.
 
 ---
@@ -299,7 +330,7 @@ Quản lý định danh khách hàng và cấu trúc hội thoại/chứng từ 
 
 ### Prerequisites
 - Hoàn thành Epic 2.
-- Quy tắc liên kết Telegram user/chat với Customer đã thống nhất.
+- Quy tắc liên kết người gửi trên Zalo với Customer đã thống nhất.
 
 ### Required Inputs
 - Mô hình dữ liệu Customer, Conversation, Message, Document mức MVP.
@@ -308,7 +339,7 @@ Quản lý định danh khách hàng và cấu trúc hội thoại/chứng từ 
 ### Deliverables
 - CRUD tối thiểu cho Customer.
 - Lưu và hiển thị Conversation/Message/Document liên quan.
-- Cơ chế liên kết khách hàng với dữ liệu intake có bước xác minh Telegram User/Chat ↔ Customer.
+- Cơ chế liên kết khách hàng với dữ liệu intake có bước xác minh người gửi ↔ Customer (mục 3.9).
 - Hàng đợi `UNVERIFIED_QUEUE` cho dữ liệu chưa xác minh chủ sở hữu.
 
 ### Completion Criteria
@@ -397,7 +428,7 @@ Phát hiện dữ liệu thiếu, trùng lặp, sai hoặc mâu thuẫn để gi
 ## 4.7 Epic 7: Exception & Approval Management
 
 ### Scope Objective
-Vận hành mô hình exception-based workflow và luồng AI follow-up đầy đủ với duyệt bắt buộc trước khi gửi Telegram.
+Vận hành mô hình exception-based workflow và luồng yêu cầu bổ sung chứng từ với duyệt bắt buộc trước khi gửi khách.
 
 ### Prerequisites
 - Hoàn thành Epic 6.
@@ -410,12 +441,12 @@ Vận hành mô hình exception-based workflow và luồng AI follow-up đầy �
 ### Deliverables
 - Exception Inbox logic và trạng thái xử lý.
 - Tác vụ Review/Approve/Reject/Correct cho Accountant.
-- Luồng follow-up trạng thái: `DRAFT` → `PENDING_APPROVAL` → `APPROVED` → `SENDING` → `SENT` → `ANSWERED`.
+- Luồng follow-up trạng thái: `DRAFT` → `PENDING_APPROVAL` → `APPROVED` → `SENDING` → `SENT` → `ANSWERED`. Trong pilot chưa có Zalo OA, bước gửi do Accountant thực hiện thủ công qua Zalo; hệ thống không tự gửi.
 - Trạng thái ngoại lệ follow-up: `REJECTED`, `SEND_FAILED` và cơ chế retry có idempotency key chống gửi trùng.
 - Liên kết phản hồi khách hàng vào Document/Exception liên quan để đóng vòng xử lý.
 
 ### Completion Criteria
-- Không có câu hỏi follow-up nào gửi ra Telegram khi chưa được duyệt.
+- Không có câu hỏi follow-up nào gửi tới khách hàng khi chưa được duyệt.
 - Một câu hỏi đã duyệt không bị gửi trùng khi webhook/API retry.
 - Trạng thái gửi thành công/thất bại và phản hồi khách hàng được theo dõi end-to-end.
 - Quyết định của kế toán được lưu audit trail.
@@ -518,4 +549,5 @@ Hoàn thiện kiểm thử end-to-end, security review, traceability review và 
 | 1 | Skill Reference | verikit-constitution SKILL | `C:\Users\TuanMQ\.agents\skills\verikit-constitution\SKILL.md` |
 | 2 | Template Reference | Constitution Template | `C:\Users\TuanMQ\.agents\skills\.verikit\verikit-templates\constitution-template.md` |
 | 3 | Project Input | Confirmed project brief and Epic decisions | User clarification in current session |
+| 4 | Decision | Quyết định 2026-10-26: Zalo là kênh ưu tiên, chính sách AI & dữ liệu, multi-tenant từ MVP, nguồn yêu cầu chuẩn | Product Owner, phiên làm việc 2026-10-26 |
 

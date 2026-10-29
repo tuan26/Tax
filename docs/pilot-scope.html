@@ -166,8 +166,8 @@ pre.api { background: var(--surface); border: 1px solid var(--line); border-radi
 <section>
   <div class="eyebrow">Ba điểm phải chốt trước khi build</div>
   <h2>Những chỗ có thể làm hỏng pilot</h2>
-  <div class="risk"><b>1 · Nhập thủ công làm mất tín hiệu thời gian</b><span>Kéo ảnh từ Zalo PC và dán đoạn chat thường không giữ được giờ gửi chính xác và người gửi. Bộ gom tin trong spec dựa nhiều vào thứ tự và khoảng cách thời gian. Ở chế độ nhập tay, kế toán sẽ chọn ngày cho từng đợt nhập, và hệ thống sẽ đưa nhiều item vào hàng chờ hơn. Mọi chỉ số phải tách theo nguồn (Zalo OA hay nhập tay), nếu không sẽ đánh giá sai chất lượng gom tin.</span></div>
-  <div class="risk"><b>2 · Dữ liệu thật đi qua OCR và AI nào</b><span>Pipeline hybrid chưa có, ý kiến pháp lý (Q36) chưa có. Pilot với dữ liệu thật cần một trong hai: hộ ký đồng ý cho dữ liệu được xử lý bởi dịch vụ AI nước ngoài có cam kết không lưu và không huấn luyện, và xóa toàn bộ sau pilot; hoặc chỉ dùng OCR trong nước. Không chốt điều này thì không được bắt đầu pilot.</span></div>
+  <div class="risk"><b>1 · Nhập thủ công làm mất tín hiệu thời gian</b><span>Kéo ảnh từ Zalo PC và dán đoạn chat thường không giữ được giờ gửi chính xác và người gửi. Bộ gom tin trong spec dựa nhiều vào thứ tự và khoảng cách thời gian. Ở chế độ nhập tay, kế toán sẽ chọn ngày cho từng đợt nhập, và hệ thống sẽ đưa nhiều item vào hàng chờ hơn. Mọi chỉ số phải tách theo nguồn (<code>source_type</code>: nhập tay, tải tệp, và Zalo OA nếu sau này được duyệt), nếu không sẽ đánh giá sai chất lượng gom tin.</span></div>
+  <div class="risk"><b>2 · Dữ liệu thật đi qua OCR nào</b><span>Đã chốt (26/10/2026, Constitution mục 3.13): pilot chỉ dùng OCR theo kiến trúc đã duyệt; không gửi dữ liệu khách hàng tới dịch vụ AI nước ngoài; không có LLM hoặc dịch vụ AI bên ngoài trong luồng; không dùng dữ liệu pilot để huấn luyện khi chưa có đồng ý riêng. Ý kiến pháp lý về dữ liệu cá nhân và chứng từ (Q36) vẫn phải có trước khi đưa dữ liệu thật vào hệ thống.</span></div>
   <div class="risk"><b>3 · Ai chạy và host app</b><span>Kế toán cần một địa chỉ web truy cập được, có đăng nhập, có sao lưu. Code viết ở đây chưa có chỗ chạy. Cần một người deploy, tốt nhất trên cloud trong nước, và theo dõi lỗi trong 2 tuần pilot.</span></div>
 </section>
 
@@ -176,7 +176,7 @@ pre.api { background: var(--surface); border: 1px solid var(--line); border-radi
   <h2>Năm màn hình, theo đúng thứ tự kế toán làm việc</h2>
   <div class="cols">
     <div><span class="screen-n">M1</span><h3>Danh sách hộ</h3><ul><li>Tên hộ, giờ chốt ngày</li><li>Số item chờ duyệt, số việc cần xử lý</li><li>Tạo hộ mới</li></ul></div>
-    <div><span class="screen-n">M2</span><h3>Nhập dữ liệu</h3><ul><li>Kéo thả nhiều ảnh, PDF</li><li>Dán đoạn chat</li><li>Chọn ngày và người gửi cho đợt nhập</li><li>Hộp thư Zalo OA nếu spike kịp</li></ul></div>
+    <div><span class="screen-n">M2</span><h3>Nhập dữ liệu</h3><ul><li>Kéo thả nhiều ảnh, PDF</li><li>Dán đoạn chat</li><li>Chọn ngày và người gửi cho đợt nhập</li></ul></div>
     <div><span class="screen-n">M3</span><h3>Sổ theo ngày</h3><ul><li>Từng ngày: thu, chi, số chứng từ</li><li>Mỗi bản ghi có nhãn trạng thái</li><li>Bấm vào xem ảnh và tin gốc</li><li>Xuất Excel đơn giản</li></ul></div>
     <div><span class="screen-n">M4</span><h3>Hàng chờ duyệt</h3><ul><li>Ảnh gốc bên trái, các trường bên phải</li><li>Độ tin cậy cho từng quyết định</li><li>Xác nhận, sửa, tách nhóm, gộp nhóm, gán vào nhóm khác</li><li>Phím tắt để duyệt nhanh</li></ul></div>
     <div><span class="screen-n">M5</span><h3>Việc cần xử lý</h3><ul><li>Phát hiện kèm bằng chứng</li><li>Đã có chứng từ · Không cần (ghi lý do) · Yêu cầu bổ sung</li><li>Copy tin nhắn đòi chứng từ để gửi Zalo</li><li>Đề xuất ghép dạng ✓/? và nút xác nhận</li></ul></div>
@@ -206,7 +206,6 @@ pre.api { background: var(--surface); border: 1px solid var(--line); border-radi
 <pre class="api">POST   /customers                         tạo hộ
 GET    /customers                         danh sách + số item chờ, số việc cần xử lý
 POST   /customers/{id}/imports            ảnh + đoạn chat dán + ngày, người gửi → MESSAGE gốc
-POST   /webhooks/zalo                     (nếu spike Zalo OA kịp)
 GET    /customers/{id}/ledger?from=&to=   sổ theo ngày
 GET    /customers/{id}/review-queue       item chưa chắc, sắp theo ngày
 POST   /records/{id}/confirm              xác nhận nguyên trạng
@@ -230,7 +229,7 @@ POST   /activity                          nhịp hoạt động để đo thời
     <table>
       <thead><tr><th>Bảng</th><th>Ghi chú</th></tr></thead>
       <tbody>
-        <tr><td><code>app_user</code>, <code>customer</code>, <code>sender</code></td><td>Không có văn phòng, không có vai trò</td></tr>
+        <tr><td><code>app_user</code>, <code>customer</code>, <code>sender</code></td><td>Không có văn phòng, không có vai trò. Mọi bảng mang <code>tenant_id</code>, cô lập bằng RLS (Constitution mục 3.14)</td></tr>
         <tr><td><code>import_batch</code></td><td>Một lần nhập tay: ai nhập, ngày được chọn, nguồn. Dùng để tách chỉ số theo nguồn</td></tr>
         <tr><td><code>message</code>, <code>attachment</code></td><td>Theo <code>messages.schema.json</code>. Chỉ thêm, không sửa</td></tr>
         <tr><td><code>extraction</code>, <code>ai_call</code></td><td>Kết quả OCR và AI, có engine và phiên bản. Log mọi lần gọi dịch vụ ngoài</td></tr>
@@ -249,7 +248,7 @@ POST   /activity                          nhịp hoạt động để đo thời
   <div class="eyebrow">Ngoài pilot</div>
   <h2>Cắt hẳn</h2>
   <div class="cols">
-    <div><ul><li>Đa văn phòng, phân quyền</li><li>Pipeline hybrid, bộ ẩn danh (thay bằng đồng ý bằng văn bản và xóa sau pilot)</li><li>Gửi tin qua Zalo OA (thay bằng copy)</li></ul></div>
+    <div><ul><li>Đa văn phòng, phân quyền</li><li>LLM và mọi dịch vụ AI nước ngoài (Constitution mục 3.13)</li><li>Zalo OA, cả nhận và gửi tin (thay bằng nhập tay và copy); chỉ làm khi đã xác minh nhu cầu, khả năng tích hợp, chi phí và được duyệt</li></ul></div>
     <div><ul><li>XML hóa đơn, sao kê, POS</li><li>Rule thuế, DQ-04 đến DQ-06</li><li>Rule engine có phiên bản trong DB</li></ul></div>
     <div><ul><li>Dashboard, báo cáo đẹp, mẫu sổ</li><li>Mobile</li><li>Tự đóng phát hiện</li></ul></div>
   </div>

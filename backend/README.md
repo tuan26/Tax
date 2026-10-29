@@ -28,7 +28,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 python -m app.worker                                       # xử lý lại đợt nhập bị lỗi
 ```
 
-`FOREIGN_AI_ENABLED` mặc định tắt. Chỉ bật khi đã có ý kiến pháp lý về pipeline hybrid.
+`FOREIGN_AI_ENABLED` mặc định tắt và phải giữ tắt: không gửi dữ liệu khách hàng tới dịch vụ AI nước ngoài trong giai đoạn hiện tại (Constitution mục 3.13). Chỉ đổi khi có đề xuất nêu nhà cung cấp, nơi xử lý, loại dữ liệu, chi phí, pháp lý và đã được duyệt, cập nhật Constitution.
 `OCR_PROVIDER` mặc định `none`: ảnh vào hàng chờ để kế toán nhập. `tesseract` có sẵn làm mốc so sánh; chọn provider cho pilot bằng spike trong `../tools/ocr_spike/`.
 
 ## Pilot release gate

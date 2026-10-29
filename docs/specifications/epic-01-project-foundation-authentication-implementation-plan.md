@@ -3,7 +3,7 @@
 **Project**: Accounting Intake Agent  
 **Epic**: Project Foundation & Authentication  
 **Input spec**: `docs/specifications/epic-01-project-foundation-authentication-spec.md`  
-**Constitution alignment**: `docs/overview/constitution.md` v`2.0.0.0`  
+**Constitution alignment**: `docs/overview/constitution.md` v`3.0.0.0`  
 **Status**: Draft plan (design-level only, no code/migration)
 
 ---
@@ -17,8 +17,9 @@ Plan này chỉ áp dụng cho Epic 1 và chuẩn bị nền tảng cho Epic 2�
 3. Security baseline: lockout/rate-limit/cookie+CSRF/secrets hygiene.
 4. Audit envelope, error code catalog, reason code catalog.
 5. Correlation/idempotency foundations phục vụ workflow end-to-end.
+6. Nền tảng multi-tenant: cô lập tenant bằng PostgreSQL RLS (spec DP-005, FR-E1-025).
 
-Không bao gồm OCR, intent, Telegram ownership workflow chi tiết, document validation nghiệp vụ hoặc export logic.
+Không bao gồm OCR, intent, workflow xác minh người gửi ↔ Customer chi tiết, document validation nghiệp vụ hoặc export logic.
 
 ---
 
@@ -115,6 +116,7 @@ Design notes:
 1. Refresh token lưu hash (không plaintext).
 2. Session + refresh tách bảng để rotation/revoke rõ ràng.
 3. Manager scoping áp dụng assignment-based access control ngay từ Epic 1 foundation.
+4. Mọi bảng trên (trừ counter chỉ chứa khóa đã băm không gắn tenant, nếu có) mang `tenant_id`, bật và FORCE RLS; khóa ngoại giữa bảng tenant dùng cặp `(tenant_id, id)` để không tham chiếu được sang tenant khác.
 
 ---
 
@@ -243,7 +245,7 @@ All admin endpoints require role `ADMIN`; unauthorized calls return standardized
 
 ### Phase E — Readiness Review
 
-1. Rà soát nhất quán với Constitution v2.0.0.0.
+1. Rà soát nhất quán với Constitution v3.0.0.0.
 2. Rà soát security baseline trước coding.
 3. Ký duyệt Epic 1 implementation-ready checklist.
 
@@ -251,7 +253,7 @@ All admin endpoints require role `ADMIN`; unauthorized calls return standardized
 
 ## 8) Dependencies
 
-1. Constitution v2.0.0.0 đã approved.
+1. Constitution v3.0.0.0 đã approved.
 2. Quyết định token/session/lockout/MFA strategy đã confirmed.
 3. Hạ tầng Docker Compose baseline sẵn sàng cho backend/frontend/postgres.
 4. Quy tắc vai trò và phân quyền nghiệp vụ đã thống nhất.
@@ -288,6 +290,7 @@ External/Deferred:
 4. Log scrubbing (no secret/token leakage).
 5. IP rate limit HTTP 429 behavior.
 6. Refresh endpoint-specific rate limiting.
+7. Tenant isolation theo AC-E1-017, chạy bằng role ứng dụng (không superuser, không BYPASSRLS): đọc/sửa/xóa/chèn chéo tenant, khóa ngoại sang tenant khác, truy vấn khi chưa đặt tenant, và từng hàm SECURITY DEFINER được cấp cho role ứng dụng.
 
 ### 9.4 Audit Verification
 
@@ -308,7 +311,7 @@ Epic 1 được coi là hoàn thành khi:
 5. Error codes và audit reason codes được chuẩn hóa và tái sử dụng được.
 6. Audit logs đạt đủ trường tối thiểu, không chứa secrets/tokens.
 7. AC trong spec Epic 1 có test coverage tương ứng (unit/integration/security).
-8. Rà soát nhất quán với Constitution v2.0.0.0 đạt yêu cầu.
+8. Rà soát nhất quán với Constitution v3.0.0.0 đạt yêu cầu.
 
 ---
 

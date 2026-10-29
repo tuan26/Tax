@@ -1,7 +1,7 @@
 # Specification — Epic 1: Project Foundation & Authentication
 
 **Project**: Accounting Intake Agent  
-**Source of truth**: `docs/overview/constitution.md` (Version `2.0.0.0`)  
+**Source of truth**: `docs/overview/constitution.md` (Version `3.0.0.0`)  
 **Epic**: `4.1 Epic 1: Project Foundation & Authentication`  
 **Status**: Updated draft for implementation planning
 
@@ -11,7 +11,7 @@
 
 1. Giữ nguyên 10 Epic đã chốt trong Constitution.
 2. Không mở rộng ngoài MVP V1 scope.
-3. Giữ nguyên Tech Stack: Python/FastAPI, PostgreSQL, Next.js, Telegram Bot API, OCR + LLM, Docker.
+3. Giữ nguyên Tech Stack: Python/FastAPI, PostgreSQL (multi-tenant, RLS), Next.js, kênh Zalo (pilot nhập thủ công, chưa Zalo OA), OCR theo kiến trúc đã duyệt, không LLM hoặc dịch vụ AI bên ngoài, Docker.
 4. Giữ nguyên Language Policy.
 5. Future Roadmap V2–V5 chỉ để tham chiếu, không triển khai trong Epic 1.
 
@@ -21,14 +21,14 @@
 
 ### DP-001 Authentication Boundary
 
-1. Customer tương tác qua Telegram, **không bắt buộc** có tài khoản Web Dashboard trong MVP V1.
+1. Customer tương tác qua kênh tiếp nhận (Zalo; trong pilot đầu tiên kế toán nhập thủ công thay khách), **không bắt buộc** có tài khoản Web Dashboard trong MVP V1.
 2. Dashboard Authentication chỉ áp dụng cho Accountant, Manager, Admin.
 3. Mọi route dashboard/API nội bộ phải kiểm tra danh tính và quyền truy cập theo vai trò.
 
 ### DP-002 Customer Mapping Model
 
-1. Không giả định quan hệ `1 Telegram User = 1 Customer`.
-2. Một Telegram User có thể đại diện nhiều Customer.
+1. Không giả định quan hệ `1 người gửi trên kênh tiếp nhận = 1 Customer`.
+2. Một người gửi (ví dụ một tài khoản Zalo) có thể đại diện nhiều Customer.
 3. Khi chưa xác định được ownership, dữ liệu phải vào `UNVERIFIED_QUEUE` và yêu cầu xác minh thủ công.
 4. AI không được tự suy đoán ownership nếu thiếu căn cứ.
 
@@ -42,6 +42,12 @@
 
 1. Acceptance Criteria phải có đủ happy path, error path, retry, duplicate, uncertainty, concurrency, authorization.
 2. Mỗi AC phải kiểm thử được bằng điều kiện đầu vào và kết quả mong đợi rõ ràng.
+
+### DP-005 Tenant Isolation
+
+1. Mỗi công ty dịch vụ kế toán là một tenant; mọi dữ liệu nghiệp vụ, user, session và audit gắn `tenant_id`.
+2. Cô lập tenant được thực thi bằng PostgreSQL Row Level Security dưới role ứng dụng không phải superuser, không BYPASSRLS (Constitution mục 3.14).
+3. Kiểm tra authz ở tầng API không thay thế RLS; RLS không thay thế authz theo vai trò.
 
 ---
 
@@ -67,8 +73,8 @@ Thiết lập nền tảng kỹ thuật và bảo mật cho MVP V1, bao gồm au
 
 1. Đăng nhập web cho Customer.
 2. OCR, intent classification, validation nghiệp vụ chi tiết.
-3. Telegram ownership verification workflow chi tiết (thực thi ở Epic 3), chỉ chuẩn bị nền tảng authz/audit.
-4. Follow-up workflow gửi tin Telegram (Epic 7).
+3. Workflow xác minh người gửi ↔ Customer chi tiết (thực thi ở Epic 3), chỉ chuẩn bị nền tảng authz/audit.
+4. Follow-up workflow gửi yêu cầu bổ sung cho khách (Epic 7).
 5. Export schema chi tiết (Epic 9).
 6. Bắt buộc triển khai MFA cho Admin trong MVP V1 (chỉ yêu cầu MFA-ready architecture).
 
@@ -78,7 +84,7 @@ Thiết lập nền tảng kỹ thuật và bảo mật cho MVP V1, bao gồm au
 2. **Manager**: giám sát, truy cập báo cáo và phạm vi quản lý được cấp.
 3. **Accountant**: thao tác xử lý chứng từ/exceptions theo phân quyền.
 4. **System Service**: backend services thực thi workflow, ghi audit, áp dụng authz.
-5. **Customer (Telegram-only actor)**: tác nhân nghiệp vụ từ Telegram, không thuộc dashboard auth trong MVP V1.
+5. **Customer (channel-only actor)**: tác nhân nghiệp vụ gửi chứng từ qua kênh tiếp nhận (Zalo), không thuộc dashboard auth trong MVP V1.
 
 ### 3.5 Inputs / Outputs
 
@@ -115,7 +121,7 @@ Thiết lập nền tảng kỹ thuật và bảo mật cho MVP V1, bao gồm au
 - **FR-E1-014 (Secrets & Config Security)**: Secrets phải lấy từ environment/secret manager; cấm hard-code trong source/config committed.
 - **FR-E1-015 (Authorization Guardrails for Future Flows)**: Các endpoint thay đổi trạng thái nghiệp vụ phải dùng middleware/policy check chuẩn để hỗ trợ centralized lifecycle control ở Epic 4/6/7.
 - **FR-E1-016 (Request Correlation & Idempotency Foundation)**: API foundation phải hỗ trợ correlation ID và idempotency key handling cho các thao tác cần retry-safe.
-- **FR-E1-017 (Multi-Customer Mapping Readiness)**: Mô hình phân quyền và identity phải không khóa cứng giả định `1 Telegram User = 1 Customer`.
+- **FR-E1-017 (Multi-Customer Mapping Readiness)**: Mô hình phân quyền và identity phải không khóa cứng giả định `1 người gửi trên kênh tiếp nhận = 1 Customer`.
 - **FR-E1-018 (Unverified Queue Access Control Readiness)**: Chuẩn phân quyền phải sẵn sàng cho việc chỉ Accountant/Manager/Admin phù hợp mới được thao tác dữ liệu `UNVERIFIED_QUEUE` ở Epic 3.
 - **FR-E1-019 (MFA-ready Architecture)**: Authentication architecture không được cản trở việc bổ sung MFA cho Admin ở phase sau.
 - **FR-E1-020 (Password Policy Baseline)**: Password dashboard users tối thiểu 12 ký tự, hỗ trợ passphrase, hash bằng Argon2id.
@@ -123,11 +129,12 @@ Thiết lập nền tảng kỹ thuật và bảo mật cho MVP V1, bao gồm au
 - **FR-E1-022 (Manager Assignment Scope Enforcement)**: Manager chỉ truy cập resource thuộc assignment hợp lệ do Admin quản lý; mặc định deny khi thiếu assignment.
 - **FR-E1-023 (Refresh/Sensitive Endpoint Rate Limit)**: Endpoint refresh token và endpoint nhạy cảm phải có rate limit riêng theo policy.
 - **FR-E1-024 (Configurable Security Thresholds)**: Ngưỡng lockout/rate-limit phải cấu hình được qua environment variables.
+- **FR-E1-025 (Tenant Isolation)**: Mọi bảng chứa dữ liệu tenant phải bật và FORCE Row Level Security; ứng dụng chỉ truy cập dữ liệu qua role không có BYPASSRLS; khi chưa xác định tenant thì không trả dữ liệu tenant nào. Hàm chạy với quyền nâng cao (SECURITY DEFINER) phải được rà soát để không làm lộ hoặc thay đổi dữ liệu của tenant khác.
 
 ### 3.7 Business Rules
 
 - **BR-E1-001**: Chỉ Admin mới được tạo/sửa/vô hiệu hóa dashboard user accounts.
-- **BR-E1-002**: Customer không có dashboard account trong MVP V1; mọi tương tác Customer đi qua Telegram channel flows.
+- **BR-E1-002**: Customer không có dashboard account trong MVP V1; mọi tương tác Customer đi qua kênh tiếp nhận (Zalo; trong pilot đầu tiên kế toán nhập thủ công thay khách).
 - **BR-E1-003**: Mọi quyết định ảnh hưởng dữ liệu kế toán phải truy vết được qua audit log với actor rõ ràng.
 - **BR-E1-004**: Authorization áp dụng nguyên tắc deny-by-default khi role/policy không rõ ràng.
 - **BR-E1-005**: Không dùng confidence score làm điều kiện duy nhất để bypass human approval/authorization.
@@ -141,6 +148,7 @@ Thiết lập nền tảng kỹ thuật và bảo mật cho MVP V1, bao gồm au
 - **BR-E1-013**: IP login rate limit mặc định: 30 lần trong 5 phút, vượt ngưỡng trả HTTP 429.
 - **BR-E1-014**: Không khóa vĩnh viễn account hoặc IP trong MVP V1.
 - **BR-E1-015**: Audit reason codes dùng taxonomy `AUDIT_*` ổn định, độc lập ngôn ngữ hiển thị.
+- **BR-E1-016**: User, session và mọi thao tác chỉ thuộc một tenant; không có thao tác nào của tenant này đọc, sửa, xóa hoặc tham chiếu được dữ liệu của tenant khác.
 
 ### 3.8 User Stories
 
@@ -233,16 +241,21 @@ Thiết lập nền tảng kỹ thuật và bảo mật cho MVP V1, bao gồm au
 **When** tổng số lần sai vượt ngưỡng lockout  
 **Then** hệ thống khóa tạm account đúng policy, tránh race condition gây sai trạng thái lock.
 
+#### AC-E1-017 — Tenant isolation under application role
+**Given** hai tenant A và B có dữ liệu trên mọi bảng chứa dữ liệu tenant, và kết nối dùng role ứng dụng (không superuser, không BYPASSRLS)  
+**When** phiên của tenant A thực hiện: đọc, sửa, xóa dòng của B; chèn dòng mang `tenant_id` của B; ghi dòng tham chiếu (khóa ngoại) tới dòng của B; truy vấn khi chưa đặt tenant; gọi các hàm SECURITY DEFINER được cấp cho role ứng dụng; gọi API với ID thuộc B  
+**Then** không thao tác nào đọc được, thay đổi được hoặc tạo được tham chiếu tới dữ liệu của B; dữ liệu của B không đổi sau bộ test; test chạy tự động trong CI và kết quả không được thay bằng việc migration chạy thành công.
+
 ### 3.10 Dependencies
 
 #### Upstream
 
-1. Constitution v2.0.0.0 được phê duyệt.
+1. Constitution v3.0.0.0 được phê duyệt.
 2. Vai trò và scope MVP V1 đã chốt.
 
 #### Downstream (Epic handoff)
 
-1. **Epic 2** dùng auth/audit foundation cho webhook admin operations và secure internal APIs.
+1. **Epic 2** dùng auth/audit foundation cho import thủ công (tải chứng từ lên, chép chat) và secure internal APIs; webhook kênh chỉ áp dụng khi Zalo OA được duyệt.
 2. **Epic 3** dùng RBAC + audit + unverified access controls.
 3. **Epic 4/5/6/7** dùng centralized authorization guard + correlation/idempotency foundation.
 4. **Epic 8/9/10** dùng dashboard auth, audit envelope, error/reason code catalog và security gates.
@@ -257,6 +270,7 @@ Thiết lập nền tảng kỹ thuật và bảo mật cho MVP V1, bao gồm au
 6. Principal không rõ role hoặc role mapping không hợp lệ.
 7. Request thiếu correlation ID/idempotency key với endpoint yêu cầu bắt buộc.
 8. Hành động nghiệp vụ đòi bằng chứng ownership nhưng context chưa xác minh.
+9. Request không xác định được tenant hoặc tham chiếu ID thuộc tenant khác.
 
 ### 3.12 Security & Audit Requirements
 
@@ -268,6 +282,7 @@ Thiết lập nền tảng kỹ thuật và bảo mật cho MVP V1, bao gồm au
 6. Token transport/storage qua `HttpOnly`, `Secure`, `SameSite` cookies và có CSRF protection.
 7. Có chuẩn error codes dùng chung cho auth/authz (nhóm `AUTH_*`, `AUTHZ_*`) và chuẩn reason codes `AUDIT_*`.
 8. Thiết kế hiện tại phải cho phép bổ sung MFA cho Admin mà không phá API contracts cốt lõi.
+9. Cô lập tenant bằng RLS theo FR-E1-025 và kiểm chứng theo AC-E1-017.
 
 ### 3.13 Shared Code Catalog Baseline (Epic 1)
 
@@ -306,12 +321,13 @@ Thiết lập nền tảng kỹ thuật và bảo mật cho MVP V1, bao gồm au
 5. **MFA strategy**: chưa bắt buộc trong MVP V1 (dữ liệu giả lập), nhưng kiến trúc phải MFA-ready và cần đánh giá lại trước pilot dữ liệu thật.
 6. **Foundation-first cho workflow**: Epic 1 không xử lý OCR/intent/validation nhưng bắt buộc tạo guardrails authz/audit/idempotency cho toàn chuỗi end-to-end.
 
-## 5) Consistency Check with Constitution v2.0.0.0
+## 5) Consistency Check with Constitution v3.0.0.0
 
 1. Phù hợp `Language Policy` và vai trò người dùng ở phần `3.12` Constitution.
 2. Giữ nguyên ranh giới MVP V1, không đưa chức năng V2–V5 vào scope.
 3. Tương thích `Document & Exception Lifecycle`, `Customer Verification`, `AI Uncertainty Handling` trong Constitution mục `3.8–3.11`.
 4. Bảo toàn nguyên tắc Human-in-the-loop, traceability, auditability.
+5. Phù hợp quyết định kênh (Zalo-first, pilot nhập thủ công), `AI & Data Policy` (mục 3.13), `Multi-tenant & Tenant Isolation` (mục 3.14) và `Requirement Sources` (mục 3.15).
 
 ## 6) Confirmed Inputs for Implementation Planning
 

@@ -23,7 +23,7 @@ cp deploy/.env.example deploy/.env
 # Sửa deploy/.env: DOMAIN, hai mật khẩu DB (dài, ngẫu nhiên, khác nhau)
 ```
 
-`FOREIGN_AI_ENABLED` luôn là `false` trong compose. Chỉ đổi khi đã có ý kiến pháp lý về pipeline hybrid.
+`FOREIGN_AI_ENABLED` luôn là `false` trong compose. Không gửi dữ liệu khách hàng tới dịch vụ AI nước ngoài trong giai đoạn hiện tại (Constitution mục 3.13); chỉ đổi khi có đề xuất nêu nhà cung cấp, nơi xử lý, loại dữ liệu, chi phí, pháp lý và đã được duyệt, cập nhật Constitution.
 
 ## 3. Chạy
 

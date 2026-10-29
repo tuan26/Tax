@@ -26,6 +26,8 @@ thử nghiệm. Các dữ liệu này có thể chứa thông tin cá nhân: h�
 - Lưu trữ và xử lý (gồm đọc chữ trên ảnh) trên máy chủ đặt tại Việt Nam: [nhà cung cấp hạ tầng, địa điểm].
 - Không gửi dữ liệu cho dịch vụ trí tuệ nhân tạo ở nước ngoài trong thời gian thử nghiệm. Công cụ có cơ chế
   chặn kỹ thuật cho việc này và ghi nhật ký mọi lần thử.
+- Không dùng dữ liệu thử nghiệm để huấn luyện mô hình. Nếu sau này cần, Nhà cung cấp phải xin đồng ý riêng
+  bằng văn bản; không đồng ý không ảnh hưởng tới việc tham gia thử nghiệm.
 - Người được truy cập: kế toán của Văn phòng được giao hộ này; [số] người của Nhà cung cấp phụ trách vận hành,
   chỉ khi cần xử lý sự cố, có ghi nhật ký.
 

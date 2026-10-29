@@ -5,8 +5,10 @@ Mục tiêu: chọn OCR trong nước cho pilot bằng số đo trên ảnh th�
 ## 1. Chuẩn bị ảnh (100–200 ảnh)
 
 Lấy từ chính các hộ sẽ tham gia pilot, có đồng ý của hộ. Ảnh thật là dữ liệu thật: chỉ chạy
-trên máy hoặc dịch vụ đặt tại Việt Nam, không gửi cho dịch vụ nước ngoài nào khi chưa có ý kiến
-pháp lý (cổng `app/ai_outbound.py` sẽ chặn).
+trên máy hoặc dịch vụ đặt tại Việt Nam, không gửi cho dịch vụ AI nước ngoài nào trong giai đoạn
+hiện tại (Constitution mục 3.13; cổng `app/ai_outbound.py` sẽ chặn). Ứng viên OCR phải xử lý dữ
+liệu tại Việt Nam; mỗi ứng viên ghi rõ nhà cung cấp, nơi xử lý, loại dữ liệu gửi đi, chi phí và
+vấn đề pháp lý cần xác minh trước khi đưa vào kiến trúc.
 
 Chia nhóm bằng cột `category` theo đúng tỷ lệ gặp ngoài thực tế, ví dụ:
 
