@@ -1,5 +1,7 @@
 # Epic 001: Project Foundation & Authentication
 
+> **Đã hợp nhất, không còn là nguồn yêu cầu (2026-10-29).** Spec chính thức của Epic 1 là `docs/specifications/epic-01-project-foundation-authentication-spec.md`; toàn bộ nội dung file này đã được hợp nhất vào mục 7 của spec đó. File giữ nguyên làm lịch sử.
+
 **Date**: 2026-10-12 13:14 (Format: yyyy-MM-dd HH:mm — update each time spec.md is edited)
 **Version**: 2.1.0.0 (Format: A.B.0.0 — A matches constitution.md; If A differs from constitution.md, use git diff to review changes; Increment B each time spec.md is edited; Always retain the note from this line as-is in the created file)
 

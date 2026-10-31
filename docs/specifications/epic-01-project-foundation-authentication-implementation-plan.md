@@ -3,7 +3,7 @@
 **Project**: Accounting Intake Agent  
 **Epic**: Project Foundation & Authentication  
 **Input spec**: `docs/specifications/epic-01-project-foundation-authentication-spec.md`  
-**Constitution alignment**: `docs/overview/constitution.md` v`3.0.0.0`  
+**Constitution alignment**: `docs/overview/constitution.md` v`4.0.0.0`  
 **Status**: Draft plan (design-level only, no code/migration)
 
 ---
@@ -245,7 +245,7 @@ All admin endpoints require role `ADMIN`; unauthorized calls return standardized
 
 ### Phase E — Readiness Review
 
-1. Rà soát nhất quán với Constitution v3.0.0.0.
+1. Rà soát nhất quán với Constitution v4.0.0.0.
 2. Rà soát security baseline trước coding.
 3. Ký duyệt Epic 1 implementation-ready checklist.
 
@@ -253,7 +253,7 @@ All admin endpoints require role `ADMIN`; unauthorized calls return standardized
 
 ## 8) Dependencies
 
-1. Constitution v3.0.0.0 đã approved.
+1. Constitution v4.0.0.0 đã approved.
 2. Quyết định token/session/lockout/MFA strategy đã confirmed.
 3. Hạ tầng Docker Compose baseline sẵn sàng cho backend/frontend/postgres.
 4. Quy tắc vai trò và phân quyền nghiệp vụ đã thống nhất.
@@ -311,7 +311,7 @@ Epic 1 được coi là hoàn thành khi:
 5. Error codes và audit reason codes được chuẩn hóa và tái sử dụng được.
 6. Audit logs đạt đủ trường tối thiểu, không chứa secrets/tokens.
 7. AC trong spec Epic 1 có test coverage tương ứng (unit/integration/security).
-8. Rà soát nhất quán với Constitution v3.0.0.0 đạt yêu cầu.
+8. Rà soát nhất quán với Constitution v4.0.0.0 đạt yêu cầu.
 
 ---
 

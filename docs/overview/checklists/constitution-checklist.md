@@ -32,6 +32,7 @@
 - [x] CHK012 Đã bổ sung Document Lifecycle với trạng thái `RECEIVED`, `PROCESSING`, `NEEDS_REVIEW`, `APPROVED`, `REJECTED`, `EXCLUDED`.
 - [x] CHK013 Đã tách Document Status và Exception Status cùng quy tắc chuyển trạng thái + audit.
 - [ ] CHK014 Đã bổ sung cơ chế xác minh người gửi trên kênh tiếp nhận (Zalo; nhập thủ công) ↔ Customer và `UNVERIFIED_QUEUE`.
+  - Quyết định 2026-10-29: chưa đánh dấu hoàn thành phần triển khai khi `UNVERIFIED_QUEUE` chưa được thực hiện. Constitution 3.9 đã mô tả cơ chế; code chưa có hàng chờ này. Pilot nhập thủ công: kế toán chọn hộ cho từng đợt nhập (có audit), nên chưa phát sinh dữ liệu chưa xác minh chủ sở hữu. Bắt buộc triển khai trước khi có kênh tiếp nhận tự động (Zalo OA).
 
 ## AI & Pilot Measurement Gate
 

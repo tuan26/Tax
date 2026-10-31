@@ -1,5 +1,7 @@
 # Spec Checklist: Epic 001 - Project Foundation & Authentication
 
+> **Đã hợp nhất, không còn là nguồn yêu cầu (2026-10-29).** Spec chính thức của Epic 1 là `docs/specifications/epic-01-project-foundation-authentication-spec.md`; checklist này đánh giá bản `spec.tmp.md` đã hợp nhất. File giữ nguyên làm lịch sử; checklist cho spec chính thức cần lập lại khi spec được duyệt.
+
 **Purpose**: Xác nhận chất lượng tài liệu `spec.md` cho Epic 001 theo template VeriKit, đúng phạm vi MVP V1 và nhất quán với `docs/overview/constitution.md` v2.0.0.0.
 **Created**: 2026-10-12
 **Feature**: `docs/E1-ProjectFoundationAuthentication/spec.md`

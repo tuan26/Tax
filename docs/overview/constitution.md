@@ -1,7 +1,7 @@
 # Accounting Intake Agent
 
-**Date**: 2026-10-27 05:44 (Format: yyyy-MM-dd HH:mm — update each time constitution.md is edited)
-**Version**: 3.0.0.0 (Format: A.0.0.0 — Increment A each time constitution.md is edited; Always retain the note from this line as-is in the created file)
+**Date**: 2026-10-29 10:18 (Format: yyyy-MM-dd HH:mm — update each time constitution.md is edited)
+**Version**: 4.0.0.0 (Format: A.0.0.0 — Increment A each time constitution.md is edited; Always retain the note from this line as-is in the created file)
 
 ---
 
@@ -222,7 +222,9 @@ Accounting Intake Agent là hệ thống AI Automation hỗ trợ công ty dịc
 
 ## 3.11 KPI Definitions & Baseline Method (Pilot)
 
-1. `Manual Handling Time`: tổng phút kế toán thao tác trực tiếp trên mỗi chứng từ.
+1. `Manual Handling Time` (KPI chính): số phút kế toán thao tác trực tiếp cho mỗi hộ (Customer) trong mỗi tháng (phút/hộ/tháng).
+   - KPI phụ: phút/chứng từ = phút/hộ/tháng chia cho số chứng từ (ảnh, PDF) của hộ đó được tiếp nhận trong tháng, không tính chứng từ `EXCLUDED`. Chỉ dùng để so sánh giữa các hộ hoặc các tháng, không thay KPI chính.
+   - Trong app: tính từ nhịp hoạt động của kế toán trên màn hình gắn với hộ, mỗi phút có hoạt động tính một phút, theo giờ Việt Nam. Việc làm ngoài app (gọi điện, nhắn Zalo, nhập phần mềm kế toán) do kế toán tự ghi và cộng vào.
 2. `Extraction Accuracy`: tỷ lệ trường dữ liệu OCR/extraction chính xác theo bộ kiểm định.
 3. `Intent Accuracy`: tỷ lệ intent nhận diện đúng theo nhãn chuẩn.
 4. `Duplicate Detection Recall`: tỷ lệ chứng từ trùng thực tế được phát hiện.
@@ -232,7 +234,7 @@ Accounting Intake Agent là hệ thống AI Automation hỗ trợ công ty dịc
 
 ### Baseline Measurement Rules
 
-1. Đo baseline trên workflow thủ công trước pilot và lưu cùng kỳ đo so sánh.
+1. Đo baseline trên workflow thủ công trước pilot và lưu cùng kỳ đo so sánh. Baseline được quy ra phút/hộ/tháng (số phút đo được chia số ngày đo, nhân số ngày làm việc trong tháng) để so cùng đơn vị với KPI chính.
 2. Tách riêng ba thành phần thời gian: thời gian AI xử lý, thời gian kế toán thao tác, thời gian chờ khách hàng.
 3. Chỉ kết luận mức tiết kiệm sau khi so sánh cùng phạm vi nghiệp vụ và cùng loại chứng từ.
 
@@ -550,4 +552,5 @@ Hoàn thiện kiểm thử end-to-end, security review, traceability review và 
 | 2 | Template Reference | Constitution Template | `C:\Users\TuanMQ\.agents\skills\.verikit\verikit-templates\constitution-template.md` |
 | 3 | Project Input | Confirmed project brief and Epic decisions | User clarification in current session |
 | 4 | Decision | Quyết định 2026-10-26: Zalo là kênh ưu tiên, chính sách AI & dữ liệu, multi-tenant từ MVP, nguồn yêu cầu chuẩn | Product Owner, phiên làm việc 2026-10-26 |
+| 5 | Decision | Quyết định 2026-10-29: KPI chính phút/hộ/tháng, KPI phụ phút/chứng từ; spec Epic 1 chính thức là `docs/specifications/epic-01-project-foundation-authentication-spec.md` | Product Owner, phiên làm việc 2026-10-29 |
 
