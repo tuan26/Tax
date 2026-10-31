@@ -4,7 +4,7 @@ import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { EvidenceList, Thumbs } from "@/components/Evidence";
 import { RecordForm } from "@/components/RecordForm";
 import { Shell } from "@/components/Shell";
-import { api } from "@/lib/api";
+import { api, fetchBlobUrl } from "@/lib/api";
 import { day, KIND, money, todayIso } from "@/lib/format";
 import type { LedgerRecord } from "@/lib/types";
 import { useActivity } from "@/lib/useActivity";
@@ -27,6 +27,7 @@ export default function LedgerPage({ params }: { params: Promise<{ id: string }>
   const [month, setMonth] = useState(todayIso().slice(0, 7));
   const [rows, setRows] = useState<LedgerRecord[] | null>(null);
   const [open, setOpen] = useState<LedgerRecord | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     const [from, to] = monthBounds(month);
@@ -54,6 +55,21 @@ export default function LedgerPage({ params }: { params: Promise<{ id: string }>
       .reduce((s, r) => s + (r.fields.amount ?? 0), 0);
   const all = rows ?? [];
 
+  const exportXlsx = async () => {
+    setExportError(null);
+    const [from, to] = monthBounds(month);
+    try {
+      const url = await fetchBlobUrl(`/customers/${id}/export.xlsx?date_from=${from}&date_to=${to}`);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `so-theo-ngay_${month}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportError("Không xuất được file. Thử lại sau.");
+    }
+  };
+
   return (
     <Shell customerId={id}>
       <main className="page">
@@ -61,7 +77,11 @@ export default function LedgerPage({ params }: { params: Promise<{ id: string }>
           <h1>Sổ theo ngày</h1>
           <span className="spacer" />
           <input id="month" type="month" value={month} onChange={(e) => setMonth(e.target.value)} style={{ width: 170 }} />
+          <button className="btn" onClick={exportXlsx}>
+            Xuất Excel
+          </button>
         </div>
+        {exportError && <div className="alert">{exportError}</div>}
         <div className="card row" style={{ gap: 28 }}>
           <div>
             <div className="muted small">Thu trong tháng</div>

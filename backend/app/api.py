@@ -10,7 +10,9 @@ from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Respons
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, Field
 
-from . import findings, review
+from urllib.parse import quote
+
+from . import export, findings, review
 from .pipeline import process_customer
 from .security import new_token, token_hash, verify_password
 
@@ -309,10 +311,33 @@ def create_app(settings, db, storage, ocr) -> FastAPI:
     def records(customer_id: UUID, c: Auth, date_from: date | None = None, date_to: date | None = None):
         with tx(c) as conn:
             _customer(conn, customer_id)
-            rows = conn.execute("SELECT * FROM record WHERE customer_id = %s AND status = 'ACTIVE' ORDER BY created_at",
-                                (customer_id,)).fetchall()
-            ev = evidence_index(conn, customer_id)
-            matches = findings.confirmed_matches(conn, customer_id)
+            return _ledger(conn, customer_id, date_from, date_to)
+
+    @app.get("/customers/{customer_id}/export.xlsx")
+    def export_xlsx(customer_id: UUID, c: Auth, date_from: date | None = None, date_to: date | None = None):
+        with tx(c) as conn:
+            customer = _customer(conn, customer_id)
+            ledger = _ledger(conn, customer_id, date_from, date_to)
+            open_findings = conn.execute("SELECT * FROM finding WHERE customer_id = %s AND status IN ('OPEN', 'REQUESTED')"
+                                         " ORDER BY created_at", (customer_id,)).fetchall()
+            who = conn.execute("SELECT email FROM app_user WHERE id = %s", (c.user_id,)).fetchone()["email"]
+            # Dữ liệu ra khỏi hệ thống: ghi audit ai xuất, hộ nào, kỳ nào.
+            conn.execute("INSERT INTO audit_event (tenant_id, actor_kind, actor_id, table_name, row_id, action, new_row)"
+                         " VALUES (%s, 'user', %s, 'customer', %s, 'EXPORT_XLSX', %s)",
+                         (c.tenant_id, c.user_id, str(customer_id),
+                          Jsonb({"date_from": str(date_from) if date_from else None,
+                                 "date_to": str(date_to) if date_to else None, "records": len(ledger)})))
+        data = export.build_workbook(customer, ledger, open_findings, date_from, date_to, who)
+        name = f"so-theo-ngay_{date_from or 'tat-ca'}_{date_to or ''}.xlsx".replace("_.xlsx", ".xlsx")
+        return Response(data, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        headers={"Content-Disposition": f"attachment; filename=\"{name}\"; filename*=UTF-8''{quote(name)}",
+                                 "Cache-Control": "no-store"})
+
+    def _ledger(conn, customer_id, date_from, date_to):
+        rows = conn.execute("SELECT * FROM record WHERE customer_id = %s AND status = 'ACTIVE' ORDER BY created_at",
+                            (customer_id,)).fetchall()
+        ev = evidence_index(conn, customer_id)
+        matches = findings.confirmed_matches(conn, customer_id)
         out = []
         for r in rows:
             eff = review.effective_fields(r)
