@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Khôi phục vào một DB trống và một thư mục kho trống, rồi kiểm tra.
-# Server đích phải có sẵn role tax_app và role sở hữu schema giống server nguồn.
+# Server đích phải có sẵn các role tax_app, tax_auth, tax_worker (deploy/init-roles.sh) và role sở hữu schema giống server nguồn.
 #
 #   BACKUP=<thư mục backup> TARGET_ADMIN_URL=... TARGET_STORAGE_DIR=... ops/restore.sh
 set -euo pipefail

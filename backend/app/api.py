@@ -84,7 +84,8 @@ class ActivityIn(BaseModel):
     screen: str = Field(max_length=50)
 
 
-def create_app(settings, db, storage, ocr) -> FastAPI:
+def create_app(settings, db, storage, ocr, auth_db=None) -> FastAPI:
+    """auth_db: kết nối bằng role chỉ gọi được auth_lookup. Role của db không có quyền đó."""
     app = FastAPI(title="Tax check pilot", version="0.1")
 
     # ------------------------------------------------------------------ auth
@@ -112,7 +113,9 @@ def create_app(settings, db, storage, ocr) -> FastAPI:
 
     @app.post("/auth/login")
     def login(body: LoginIn):
-        with db.tx() as conn:
+        if auth_db is None:
+            raise HTTPException(503, "Chưa cấu hình kết nối đăng nhập")
+        with auth_db.tx() as conn:
             row = conn.execute("SELECT * FROM auth_lookup(%s)", (body.email,)).fetchone()
         if row is None or not verify_password(body.password, row["password_hash"]):
             raise HTTPException(401, "Sai email hoặc mật khẩu")
@@ -437,6 +440,8 @@ def create_app(settings, db, storage, ocr) -> FastAPI:
     @app.post("/activity", status_code=204)
     def activity(body: ActivityIn, c: Auth):
         with tx(c) as conn:
+            if body.customer_id is not None:
+                _customer(conn, body.customer_id)
             conn.execute("INSERT INTO activity_log (tenant_id, user_id, customer_id, screen) VALUES (%s,%s,%s,%s)",
                          (c.tenant_id, c.user_id, body.customer_id, body.screen))
 

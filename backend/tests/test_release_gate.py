@@ -159,6 +159,8 @@ def test_foreign_ai_fail_closed(db, tenants):
     cases = [
         (disabled, "synthetic", "Hóa đơn [NGUOI_1] 2.350.000", "foreign_ai_disabled"),
         (enabled, "real", "Hóa đơn [NGUOI_1] 2.350.000", "data_class_not_allowed:real"),
+        # Dữ liệu khách hàng đã ẩn danh vẫn là dữ liệu khách hàng (Constitution 3.13).
+        (enabled, "approved_anonymized", "Hóa đơn [NGUOI_1] 2.350.000", "data_class_not_allowed:approved_anonymized"),
         (enabled, "synthetic", "Chuyển cho 0903123456", "pii_detected:phone"),
         (enabled, "synthetic", "STK 0071000123456", "pii_detected"),
         (enabled, "synthetic", {"nguoi_ban": "a@b.vn"}, "pii_detected:email"),
@@ -176,7 +178,7 @@ def test_foreign_ai_fail_closed(db, tenants):
     # Mọi lần thử đều có log, kể cả lần bị chặn.
     with db.tx(tid) as conn:
         rows = conn.execute("SELECT allowed, reason FROM ai_call ORDER BY created_at").fetchall()
-    assert [r["allowed"] for r in rows] == [False] * 6 + [True]
+    assert [r["allowed"] for r in rows] == [False] * 7 + [True]
     assert rows[0]["reason"] == "foreign_ai_disabled"
 
 

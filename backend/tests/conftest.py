@@ -38,13 +38,18 @@ def pg():
     name = f"tax_test_{uuid.uuid4().hex[:8]}"
     with psycopg.connect(ADMIN, autocommit=True) as conn:
         conn.execute(f'CREATE DATABASE "{name}"')
-        conn.execute("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='tax_app_test') THEN "
-                     "CREATE ROLE tax_app_test LOGIN; END IF; END $$")
+        for role in ("tax_app_test", "tax_auth_test", "tax_worker_test"):
+            conn.execute(f"DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='{role}') THEN "
+                         f"CREATE ROLE {role} LOGIN; END IF; END $$")
     admin_url = _url(ADMIN, name)
     migrate(admin_url)
     with psycopg.connect(admin_url, autocommit=True) as conn:
+        # Ba role đăng nhập giống môi trường thật: API, bước đăng nhập, worker.
         conn.execute("GRANT tax_app TO tax_app_test")
-    yield {"admin": admin_url, "app": _url(ADMIN, name, "tax_app_test"), "name": name}
+        conn.execute("GRANT tax_auth TO tax_auth_test")
+        conn.execute("GRANT tax_worker TO tax_worker_test")
+    yield {"admin": admin_url, "app": _url(ADMIN, name, "tax_app_test"), "auth": _url(ADMIN, name, "tax_auth_test"),
+           "worker": _url(ADMIN, name, "tax_worker_test"), "name": name}
     with psycopg.connect(ADMIN, autocommit=True) as conn:
         conn.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')
 
@@ -62,6 +67,20 @@ def make_tenant(admin_url, name, email):
 @pytest.fixture(scope="session")
 def db(pg):
     d = Database(pg["app"])
+    yield d
+    d.close()
+
+
+@pytest.fixture(scope="session")
+def auth_db(pg):
+    d = Database(pg["auth"])
+    yield d
+    d.close()
+
+
+@pytest.fixture(scope="session")
+def worker_db(pg):
+    d = Database(pg["worker"])
     yield d
     d.close()
 
@@ -85,8 +104,8 @@ def settings(tmp_path):
 
 
 @pytest.fixture()
-def client(settings, db, storage):
-    return TestClient(create_app(settings, db, storage, NoOcr()))
+def client(settings, db, storage, auth_db):
+    return TestClient(create_app(settings, db, storage, NoOcr(), auth_db=auth_db))
 
 
 def login(client, pg, tenant_key, tenants):

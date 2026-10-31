@@ -18,14 +18,18 @@ TEST_PG_ADMIN_URL="postgresql://postgres@/postgres?host=/tmp&port=5432" python -
 ```bash
 export ADMIN_DATABASE_URL=postgresql://owner@db/tax        # role sở hữu schema
 python -m app.cli migrate
+# Ba role đăng nhập, mỗi role chỉ có quyền nó cần (xem deploy/init-roles.sh):
 psql "$ADMIN_DATABASE_URL" -c "CREATE ROLE tax_app_login LOGIN PASSWORD '...' IN ROLE tax_app"
+psql "$ADMIN_DATABASE_URL" -c "CREATE ROLE tax_auth_login LOGIN PASSWORD '...' IN ROLE tax_auth"
+psql "$ADMIN_DATABASE_URL" -c "CREATE ROLE tax_worker_login LOGIN PASSWORD '...' IN ROLE tax_worker"
 python -m app.cli create-tenant "Văn phòng kế toán A"     # in ra tenant_id
 python -m app.cli create-user <tenant_id> ketoan@example.com "Tên kế toán"
 
-export DATABASE_URL=postgresql://tax_app_login:...@db/tax  # role của app, không phải superuser
+export DATABASE_URL=postgresql://tax_app_login:...@db/tax        # role của app, không phải superuser
+export AUTH_DATABASE_URL=postgresql://tax_auth_login:...@db/tax   # chỉ dùng cho bước đăng nhập
 export STORAGE_DIR=/data/storage
 uvicorn app.main:app --host 0.0.0.0 --port 8000
-python -m app.worker                                       # xử lý lại đợt nhập bị lỗi
+DATABASE_URL=postgresql://tax_worker_login:...@db/tax python -m app.worker   # xử lý lại đợt nhập bị lỗi
 ```
 
 `FOREIGN_AI_ENABLED` mặc định tắt và phải giữ tắt: không gửi dữ liệu khách hàng tới dịch vụ AI nước ngoài trong giai đoạn hiện tại (Constitution mục 3.13). Chỉ đổi khi có đề xuất nêu nhà cung cấp, nơi xử lý, loại dữ liệu, chi phí, pháp lý và đã được duyệt, cập nhật Constitution.
@@ -38,7 +42,7 @@ python -m app.worker                                       # xử lý lại đ�
 | 1. Dữ liệu gốc chỉ thêm | `test_raw_data_is_append_only`, `test_decisions_only_superseded_never_rewritten`, `test_storage_never_overwrites` | Qua |
 | 2. Spec gom tin, 0 lần tự ghép sai | `tests/test_spec_suite.py` (22 ca: 20 Zalo API, 2 nhập tay) | Qua |
 | 3. 100% thao tác ghi có audit | `test_every_write_is_audited` | Qua |
-| 4. Cô lập tenant | `test_tenant_isolation_api`, `test_tenant_isolation_db`, `test_app_role_is_not_superuser` | Qua |
+| 4. Cô lập tenant | `tests/test_tenant_isolation.py` (spec AC-E1-017: mọi bảng, chèn/sửa/xóa chéo tenant, mọi khóa ngoại, thiếu tenant, hàm SECURITY DEFINER, worker, mọi API có id), `test_tenant_isolation_api`, `test_tenant_isolation_db`, `test_app_role_is_not_superuser` | Qua |
 | 5. Backup và restore | `tests/test_backup_restore.py` (khôi phục thật, backup bị sửa thì từ chối, thiếu file thì phát hiện) | Qua |
 | 6. AI nước ngoài fail-closed | `test_foreign_ai_fail_closed`, `test_default_config_disables_foreign_ai` | Qua |
 | 7. OCR lỗi giảm cấp an toàn | `tests/test_ocr_degradation.py` (lỗi, quá thời gian, trả về rác, độ tin cậy thấp) | Qua |

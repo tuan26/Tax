@@ -11,6 +11,8 @@ services:
       POSTGRES_PASSWORD: ${OWNER_DB_PASSWORD:?}
       POSTGRES_DB: tax
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:?}
+      WORKER_DB_PASSWORD: ${WORKER_DB_PASSWORD:?}
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init-roles.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
@@ -30,9 +32,10 @@ services:
   backend:
     build: { context: .., dockerfile: backend/Dockerfile }
     restart: unless-stopped
+    # Backend và worker không giữ mật khẩu owner. Lệnh quản trị chạy qua service ops bên dưới.
     environment: &backend_env
       DATABASE_URL: postgresql://tax_app_login:${APP_DB_PASSWORD}@db/tax
-      ADMIN_DATABASE_URL: postgresql://owner:${OWNER_DB_PASSWORD}@db/tax
+      AUTH_DATABASE_URL: postgresql://tax_auth_login:${AUTH_DB_PASSWORD}@db/tax
       STORAGE_DIR: /data/storage
       OCR_PROVIDER: ${OCR_PROVIDER:-tesseract}
       FOREIGN_AI_ENABLED: "false"
@@ -47,12 +50,29 @@ services:
   worker:
     build: { context: .., dockerfile: backend/Dockerfile }
     restart: unless-stopped
-    environment: *backend_env
+    environment:
+      <<: *backend_env
+      DATABASE_URL: postgresql://tax_worker_login:${WORKER_DB_PASSWORD}@db/tax
+      AUTH_DATABASE_URL: ""
     command: ["python", "-m", "app.worker"]
     volumes:
       - storage:/data/storage
     depends_on:
       migrate: { condition: service_completed_successfully }
+
+  # Lệnh quản trị (tạo tenant/user, chỉ số, sao lưu, khôi phục). Chỉ chạy khi gọi:
+  #   docker compose ... run --rm ops python -m app.cli create-tenant "Văn phòng A"
+  ops:
+    build: { context: .., dockerfile: backend/Dockerfile }
+    profiles: ["ops"]
+    environment:
+      ADMIN_DATABASE_URL: postgresql://owner:${OWNER_DB_PASSWORD}@db/tax
+      STORAGE_DIR: /data/storage
+    volumes:
+      - storage:/data/storage
+      - backups:/data/backups
+    depends_on: { db: { condition: service_healthy } }
+    command: ["true"]
 
   frontend:
     build: { context: ../frontend, args: { BACKEND_URL: "http://backend:8000" } }

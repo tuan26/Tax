@@ -11,4 +11,4 @@ from .storage import ImmutableStorage
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 settings = load_settings()
 app = create_app(settings, Database(settings.database_url), ImmutableStorage(settings.storage_dir),
-                 provider_for(settings.ocr_provider))
+                 provider_for(settings.ocr_provider), auth_db=Database(settings.auth_database_url))

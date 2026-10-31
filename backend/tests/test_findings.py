@@ -16,7 +16,7 @@ def _sv(v, c=0.97):
     return {"value": v, "confidence": c}
 
 
-def _app(settings, db, storage, seeds):
+def _app(settings, db, storage, seeds, auth_db):
     by_sha = {
         hashlib.sha256(png(seeds["transfer"])).hexdigest(): {
             "doc_type": _sv("bank_transfer"), "direction": _sv("outgoing"), "total_amount": _sv(5_000_000),
@@ -25,7 +25,7 @@ def _app(settings, db, storage, seeds):
             "doc_type": _sv("invoice"), "total_amount": _sv(5_000_000), "document_date": _sv("2026-10-02"),
             "counterparty_name": _sv("Đại lý thực phẩm Hòa", 0.9)},
     }
-    return TestClient(create_app(settings, db, storage, FixtureOcr(by_sha)))
+    return TestClient(create_app(settings, db, storage, FixtureOcr(by_sha), auth_db=auth_db))
 
 
 def _import(client, h, cid, seeds):
@@ -36,9 +36,9 @@ def _import(client, h, cid, seeds):
     assert r.status_code == 201 and r.json()["processing"] == "done", r.text
 
 
-def test_closed_loop(settings, db, storage, pg, tenants):
+def test_closed_loop(settings, db, storage, pg, tenants, auth_db):
     seeds = {"transfer": 210, "invoice": 211}
-    client = _app(settings, db, storage, seeds)
+    client = _app(settings, db, storage, seeds, auth_db)
     h = login(client, pg, "A", tenants)
     cid = new_customer(client, h, "Hộ vòng khép kín")
     _import(client, h, cid, seeds)

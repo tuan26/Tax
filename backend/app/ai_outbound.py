@@ -1,8 +1,9 @@
 """Cổng duy nhất để gửi dữ liệu ra dịch vụ AI nước ngoài. Mặc định đóng (fail-closed).
 
-Chỉ cho đi khi đồng thời: cấu hình FOREIGN_AI_ENABLED bật (sau khi có ý kiến pháp lý),
-dữ liệu thuộc loại được phép (synthetic hoặc đã duyệt ẩn danh), và payload không còn
-mẫu thông tin nhạy cảm nào. Mọi lần thử, kể cả bị chặn, đều được ghi vào ai_call.
+Chỉ cho đi khi đồng thời: cấu hình FOREIGN_AI_ENABLED bật, dữ liệu là dữ liệu giả lập
+(synthetic), và payload không còn mẫu thông tin nhạy cảm nào. Dữ liệu khách hàng, kể cả đã
+ẩn danh, không bao giờ được đi (Constitution 3.13). Mọi lần thử, kể cả bị chặn, đều được ghi
+vào ai_call.
 """
 
 from __future__ import annotations
@@ -11,7 +12,7 @@ import hashlib
 import json
 import re
 
-ALLOWED_DATA_CLASSES = {"synthetic", "approved_anonymized"}
+ALLOWED_DATA_CLASSES = frozenset({"synthetic"})
 
 PII_PATTERNS = {
     "phone": re.compile(r"(?<!\d)(?:\+?84|0)(?:\d[\s.-]?){8,9}\d(?!\d)"),

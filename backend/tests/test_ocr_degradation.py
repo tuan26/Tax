@@ -59,8 +59,8 @@ class Good:
                 "document_date": {"value": "2026-10-01", "confidence": 0.95}}
 
 
-def _run(provider, settings, db, storage, pg, tenants, seed):
-    client = TestClient(create_app(replace(settings, ocr_timeout_seconds=0.2), db, storage, provider))
+def _run(provider, settings, db, storage, pg, tenants, seed, auth_db):
+    client = TestClient(create_app(replace(settings, ocr_timeout_seconds=0.2), db, storage, provider, auth_db=auth_db))
     h = login(client, pg, "A", tenants)
     cid = new_customer(client, h, f"Hộ OCR {provider.name}")
     r = client.post(f"/customers/{cid}/imports", headers=h, data={"business_date": "2026-10-01"},
@@ -85,8 +85,8 @@ def _run(provider, settings, db, storage, pg, tenants, seed):
     (Garbage(), "ocr_failed", "failed", 103),
     (LowConfidence(), "amount_low_confidence", "ok", 104),
 ])
-def test_ocr_failure_degrades_safely(provider, reason, status, seed, settings, db, storage, pg, tenants):
-    rec, row, ext = _run(provider, settings, db, storage, pg, tenants, seed=seed)
+def test_ocr_failure_degrades_safely(provider, reason, status, seed, settings, db, storage, pg, tenants, auth_db):
+    rec, row, ext = _run(provider, settings, db, storage, pg, tenants, seed=seed, auth_db=auth_db)
     assert ext["status"] == status
     assert rec["review_required"] is True
     assert reason in rec["review_reasons"]
@@ -97,8 +97,8 @@ def test_ocr_failure_degrades_safely(provider, reason, status, seed, settings, d
         assert rec["fields"]["document_date"] is None
 
 
-def test_good_ocr_is_usable(settings, db, storage, pg, tenants):
-    rec, row, ext = _run(Good(), settings, db, storage, pg, tenants, seed=201)
+def test_good_ocr_is_usable(settings, db, storage, pg, tenants, auth_db):
+    rec, row, ext = _run(Good(), settings, db, storage, pg, tenants, seed=201, auth_db=auth_db)
     assert ext["status"] == "ok"
     assert rec["fields"]["amount"] == 2_350_000
     # Ảnh hóa đơn đọc tốt vẫn chưa đủ để sinh phát hiện nếu chưa có gì khác đáng ngờ: bản ghi đạt HIGH thì được dùng.
