@@ -1,0 +1,64 @@
+# Chạy toàn bộ test trên mỗi lần push và pull request, gồm release gate và test cô lập tenant
+# (spec AC-E1-017) bằng role ứng dụng trên PostgreSQL 16 thật. Chỉ dùng dữ liệu giả lập.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci-only
+          # Test tạo role đăng nhập không mật khẩu (tax_app_test, ...) nên server CI dùng trust.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    defaults:
+      run:
+        # Khai báo shell: bash để GitHub chạy "bash -eo pipefail": lệnh lỗi trong pipe (vd. pytest | tee) làm bước đỏ.
+        shell: bash
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Gói hệ thống (pg_dump cho test backup, tesseract cho test OCR)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client-16 tesseract-ocr tesseract-ocr-vie
+      - run: pip install -r requirements.txt
+      - name: Test
+        env:
+          TEST_PG_ADMIN_URL: postgresql://postgres@localhost:5432/postgres
+        run: python -m pytest -q
+      - name: Test cô lập tenant phải thật sự chạy, không bị bỏ qua
+        env:
+          TEST_PG_ADMIN_URL: postgresql://postgres@localhost:5432/postgres
+        run: |
+          python -m pytest -q tests/test_tenant_isolation.py -rs | tee isolation.log
+          ! grep -q "skipped" isolation.log
+
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
